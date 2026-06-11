@@ -44,8 +44,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 body{background:var(--bg);color:var(--txt);font-family:'SUIT','Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;padding-bottom:84px}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 input,select{font-family:inherit}
-header{padding:10px 16px 12px;text-align:center}
-.topbar{display:flex;justify-content:flex-end;align-items:center;gap:4px;max-width:560px;margin:0 auto;padding:calc(34px + env(safe-area-inset-top)) 14px 0}
+header{padding:30px 16px 12px;text-align:center}
+.topbar{display:flex;justify-content:flex-end;align-items:center;gap:4px;max-width:560px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 14px 0}
 .toplink{font-size:13px;font-weight:700;color:var(--sub);padding:6px 10px;border-radius:8px}
 .toplink:active{background:var(--pill)}
 .toplink.hot{color:var(--txt)}
@@ -98,6 +98,7 @@ header .sub{color:var(--sub);font-size:12px;margin-top:4px}
 .opts.c2{grid-template-columns:1fr 1fr}.opts.c3{grid-template-columns:1fr 1fr 1fr}
 .opt{background:var(--card2);border:1.5px solid var(--line);border-radius:12px;padding:10px var(--sp-3);min-height:50px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:13px;font-weight:600;transition:.12s}
 .opt.on,.opt.on.bl{border-color:var(--selbd);background:var(--sel)} /* 선택 상태 */
+.halflbl{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:7px}
 .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .pcard{background:var(--card2);border:1.5px solid var(--line);border-radius:12px;padding:var(--sp-3);text-align:left;transition:.12s}
 .pcard.on{border-color:var(--selbd);background:var(--sel)}
@@ -124,7 +125,6 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .bgroup:last-child{margin-bottom:0}
 .bgroup.hit{border-color:var(--green);background:rgba(52,211,153,.10)}
 .bgroup.miss{opacity:.5}
-.bgroup.solo{border-color:var(--gold)}
 .bgv{font-size:13px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:5px}
 .bgc{font-size:11px;font-weight:700;color:var(--sub)}
 .bgtag{font-size:10px;font-weight:800;padding:2px 7px;border-radius:7px}
@@ -175,6 +175,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .foot{text-align:center;color:var(--sub);font-size:11px;margin-top:28px;line-height:1.8;padding-bottom:var(--sp-8)}
 .crown{font-size:16px}
 .tag{font-size:10px;background:var(--pill);border-radius:6px;padding:2px 6px;color:var(--sub)}
+.tk{display:inline-block;min-width:26px;font-weight:600;color:var(--sub)}
 .taggrp{display:flex;flex-direction:column;gap:3px;align-items:flex-start}
 .warnbox{background:rgba(230,57,75,.1);border:1px solid rgba(230,57,75,.4);border-radius:12px;padding:10px 12px;font-size:12px;color:#fca5a5;margin-bottom:12px}
 #errbar{display:none;background:#7f1d1d;color:#fecaca;font-size:12px;font-weight:700;text-align:center;padding:8px}
@@ -187,7 +188,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .demobar button{background:var(--pill);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer}
 .demobar button.on{border-color:var(--gold);color:var(--gold)}
 </style>
-<script>/* 첫 페인트 전에 저장된 테마 적용(깜빡임 방지) */(function(){try{var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<script>/* 첫 페인트 전에 저장된 테마 적용(깜빡임 방지) */(function(){try{var t=localStorage.getItem('theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 </head>
 <body>
 <div id="errbar"></div>
@@ -546,8 +547,8 @@ function renderMatch(mid){
     const doneList=S.participants.filter(p=>M.preds[p.id]);
     const waitList=S.participants.filter(p=>!M.preds[p.id]);
     const chip=(p,done)=>`<span class="chip ${done?'done':''}">${avatarOf(p.id)} ${esc(p.name)}${done?'<span class="ck">✓</span>':''}</span>`;
-    if(doneList.length)html+=`<div class="pgroup"><div class="glabel">✅ 제출 완료 <span class="gn">${doneList.length}명</span></div><div class="chips">${doneList.map(p=>chip(p,true)).join('')}</div></div>`;
-    if(waitList.length)html+=`<div class="pgroup"><div class="glabel">⏳ 미제출 <span class="gn">${waitList.length}명</span></div><div class="chips">${waitList.map(p=>chip(p,false)).join('')}</div></div>`;
+    if(doneList.length)html+=`<div class="pgroup"><div class="glabel">제출 완료 <span class="gn">${doneList.length}명</span></div><div class="chips">${doneList.map(p=>chip(p,true)).join('')}</div></div>`;
+    if(waitList.length)html+=`<div class="pgroup"><div class="glabel">미제출 <span class="gn">${waitList.length}명</span></div><div class="chips">${waitList.map(p=>chip(p,false)).join('')}</div></div>`;
   }
   html+=`</div>`;
 
@@ -556,7 +557,7 @@ function renderMatch(mid){
       <div class="hint">직원 인증(이름·사번·전화번호) 후 본인 예측을 입력하세요. 마감 전까지는 서로 안 보입니다 🤫</div>
       ${USER
         ?`<button class="btn ${M.preds[USER]?'g':'b'} w" style="padding:14px" onclick="openForm('${mid}','${USER}')">${avatarOf(USER)} ${esc(pname(USER))} — ${M.preds[USER]?'제출 완료 (수정하기)':'내 예측 입력하기'}</button>`
-        :S.participants.length?`<button class="btn p w" style="padding:14px" onclick="empLoginDlg('${mid}')">🛡️ 직원 인증 후 로그인</button>`:'<div class="hint">먼저 어드민(⚙️)에서 직원을 등록하세요</div>'}
+        :S.participants.length?`<button class="btn p w" style="padding:14px" onclick="empLoginDlg('${mid}')">직원 인증 후 로그인</button>`:'<div class="hint">먼저 어드민(⚙️)에서 직원을 등록하세요</div>'}
     </div>`;
     const cnt=Object.keys(M.preds).length;
     html+=`<div class="card"><h3>🔒 예측 마감 <span class="pt">어드민 전용</span></h3>
@@ -622,18 +623,20 @@ function resultCard(mid,m,O,M){
   <button class="btn g w" onclick="copyResult('${mid}')">📋 결과 복사 (카톡 공유용)</button></div>`;
 }
 // 이 경기 순위 행들 (라이브 점수 반영 · FLIP 애니용 #lb)
-function matchRows(M,anim){
+function matchRows(M,anim,mid){
   const sc=matchScores(M);
   const rows=Object.keys(sc).map(pid=>({pid,...sc[pid]})).sort((a,b)=>b.total-a.total);
   if(!rows.length)return '<div class="hint" style="margin:0">아직 순위가 없습니다</div>';
   const ranks=tieRanks(rows.map(r=>r.total));
+  const oppFlag=mid&&MATCHES.find(x=>x.id===mid)?TEAMS[MATCHES.find(x=>x.id===mid).opp].flag:'';
+  const lbl=l=>l==='상대 첫 득점자'&&oppFlag?oppFlag+' 첫 득점자':l;
   return `<div class="lb" ${anim?'id="lb"':''}>${rows.map((r,i)=>{
     const top=ranks[i]===1&&r.total>0;
     return `<div class="lbrow ${top?'first':''}" data-pid="${r.pid}" onclick="this.classList.toggle('open')" style="flex-wrap:wrap">
       <span class="rk">${top?'👑':ranks[i]}</span>
       <span class="nm">${avatarOf(r.pid)} ${esc(gpname(r.pid))}${r.pid===USER?' <span class="tag">나</span>':''}</span>
       <span class="pts">${r.total}점</span>
-      <div class="breakdown">${r.items.map(it=>`<div class="bd-it ${it.state}"><span>${it.label}</span><span>${it.state==='pend'?'⏳ 대기':it.pts+'/'+it.max}</span></div>`).join('')}</div>
+      <div class="breakdown">${r.items.map(it=>`<div class="bd-it ${it.state}"><span>${lbl(it.label)}</span><span>${it.state==='pend'?'⏳ 대기':it.pts+'/'+it.max}</span></div>`).join('')}</div>
     </div>`;}).join('')}</div>`;
 }
 // 종합(3경기 합산) 순위 행들
@@ -663,7 +666,7 @@ function rankingsCard(mid){
   const M=S.matches[mid];
   const t=S.rankTab||'this';
   const stab=(v,l)=>`<button class="subtab ${t===v?'on':''}" onclick="S.rankTab='${v}';render()">${l}</button>`;
-  const body=t==='total'?totalRows():matchRows(M,true);
+  const body=t==='total'?totalRows():matchRows(M,true,mid);
   const foot=t==='total'?'3경기 합산 · 최대 900점 · 행을 누르면 경기별 점수':'이 경기 점수 · 행을 누르면 항목별 점수';
   return `<div class="card"><h3>📊 순위</h3>
     <div class="subtabs">${stab('this','이 경기')}${stab('total','종합')}</div>
@@ -697,14 +700,14 @@ function boardCard(mid,m,O,M){
   const body=Object.entries(groups).sort((a,b)=>b[1].length-a[1].length).map(([v,ids])=>{
     const hit=known&&v===factStr, solo=ids.length===1&&pids.length>=3;
     const cls=known?(hit?'hit':'miss'):(solo?'solo':'');
-    const badge=known?(hit?'<span class="bgtag ok">정답</span>':''):(solo?'<span class="bgtag uni">🦄 단독</span>':'');
+    const badge=known?(hit?'<span class="bgtag ok">정답</span>':''):(solo?'<span class="bgtag uni">단독</span>':'');
     return `<div class="bgroup ${cls}">
       <div class="bgv">${esc(v)} <span class="bgc">${ids.length}명</span>${badge}</div>
       <div class="bgn">${ids.map(pid=>`${avatarOf(pid)} ${esc(gpname(pid))}`).join(' · ')}</div>
     </div>`;
   }).join('');
   return `<div class="card"><h3>👀 ${m.label} 예측 비교</h3>
-    <div class="hint">${known?'정답은 초록, 빗나간 예측은 흐리게 · 같은 예측끼리 묶음':'같은 예측끼리 묶었어요 · 🦄 = 단독 예측'}</div>
+    <div class="hint">${known?'정답은 초록, 빗나간 예측은 흐리게 · 같은 예측끼리 묶음':'같은 예측끼리 묶었어요 · 단독 = 혼자 고른 예측'}</div>
     <div class="btabs">${tabs}</div>
     ${body}</div>`;
 }
@@ -723,7 +726,7 @@ function commentsCard(mid,M){
   let html=`<div class="card"><h3>💬 한 줄 코멘트</h3>`;
   if(cm.length)html+=`<div class="cmts">${cm.map(pid=>`<div class="cmt"><span class="cn">${avatarOf(pid)} ${esc(gpname(pid))}</span><span class="cc">${esc(M.preds[pid].comment)}</span></div>`).join('')}</div>`;
   else html+=`<div class="hint" style="margin:0">아직 코멘트가 없어요 — 첫 코멘트를 남겨보세요!</div>`;
-  if(mine)html+=`<div class="addrow" style="margin-top:12px"><input class="txtin" id="cmt_${mid}" maxlength="60" placeholder="경기 중에도 자유롭게 바꿔보세요" value="${esc(M.preds[USER].comment||'')}"><button class="btn b" onclick="saveComment('${mid}')">저장</button></div>`;
+  if(mine)html+=`<div class="addrow" style="margin-top:12px"><input class="txtin" id="cmt_${mid}" maxlength="60" placeholder="경기 중에도 자유롭게 바꿔보세요" value="${esc(M.preds[USER].comment||'')}"><button class="btn b" onclick="saveComment('${mid}')">변경</button></div>`;
   return html+`</div>`;
 }
 async function saveComment(mid){
@@ -735,7 +738,7 @@ async function saveComment(mid){
   const {error}=await sb.from('predictions').upsert({match_id:mid,participant_id:USER,data});
   BUSY=false;
   if(error){err('코멘트 저장 실패: '+error.message);return;}
-  toast('💬 코멘트 저장!'); render();
+  toast('💬 코멘트 변경!'); render();
 }
 /* ================= ADMIN ================= */
 let pendingAdmin=null;
@@ -761,7 +764,7 @@ function adminPanel(){
   showModal(`<div class="mbar"><button class="btn g" onclick="closeModal();render()">✕</button><h2>⚙️ 어드민 관리</h2></div>
   <div class="card"><h3>👥 직원 등록 <span class="pt">${S.participants.length}명</span></h3>
     <div class="hint">이름·사번·전화번호를 등록하세요. 세 가지가 모두 일치해야 로그인할 수 있습니다.</div>
-    ${S.participants.map(p=>`<div class="lbrow"><span class="nm">${avatarOf(p.id)} ${esc(p.name)}</span><div class="taggrp"><span class="tag">사번 ${esc(p.emp)}</span><span class="tag">📱 ${esc(p.phone)}</span></div><button class="btn g" style="padding:6px 10px;font-size:12px" onclick="editPart('${p.id}')">수정</button><button class="btn g" style="padding:6px 10px;font-size:12px" onclick="delPart('${p.id}')">삭제</button></div>`).join('')}
+    ${S.participants.map(p=>`<div class="lbrow"><span class="nm">${avatarOf(p.id)} ${esc(p.name)}</span><div class="taggrp"><span class="tag"><b class="tk">사번</b> ${esc(p.emp)}</span><span class="tag"><b class="tk">전화</b> ${esc(p.phone)}</span></div><button class="btn g" style="padding:6px 10px;font-size:12px" onclick="editPart('${p.id}')">수정</button><button class="btn g" style="padding:6px 10px;font-size:12px" onclick="delPart('${p.id}')">삭제</button></div>`).join('')}
     <div class="addrow" style="flex-wrap:wrap">
       <input id="adm_name" placeholder="이름" maxlength="8" style="flex:1;min-width:90px">
       <input id="adm_emp" placeholder="사번" maxlength="12" style="flex:1;min-width:90px">
@@ -779,7 +782,7 @@ function adminPanel(){
   <div class="card">
     <button class="btn g w" onclick="adminLogout()">어드민 로그아웃</button>
     <button class="btn g w" style="color:#f87171" onclick="resetAll()">예측·경기 데이터 초기화 (직원 명단은 유지)</button>
-  </div>`);
+  </div>`,true);
 }
 async function changePin(){
   const v=$('#adm_newpin').value.trim();
@@ -1001,7 +1004,12 @@ function drawForm(){
   ${sec('🇰🇷 대한민국 첫 득점자',40,'포지션 · A매치 통산 골 · 이번 경기 득점 확률',pgrid('krFirst',TEAMS.kr))}
   ${sec(O.flag+' '+O.name+' 첫 득점자',40,'',pgrid('oppFirst',O))}
   ${sec('첫 골 팀',15,'',opt3('firstTeam',['🇰🇷 한국',O.flag+' '+O.name,'없음 (무득점)'],['kr','opp','none'],1))}
-  ${sec('첫 골 시간대',30,'인접 시간대 선택 시 15점',`<div class="opts c2">${BANDS.map((b,i)=>`<button class="opt ${d.band===i?'on':''} bl" onclick="setF('band',${i})">${b}</button>`).join('')}<button class="opt ${d.band===-1?'on':''} bl" style="grid-column:1/-1" onclick="setF('band',-1)">없음 (무득점)</button></div>`)}
+  ${sec('첫 골 시간대',30,'인접 시간대 선택 시 15점',`
+    <div class="halflbl">전반전</div>
+    <div class="opts c2">${[0,1,2].map(i=>`<button class="opt ${d.band===i?'on':''} bl" onclick="setF('band',${i})">${BANDS[i]}</button>`).join('')}</div>
+    <div class="halflbl" style="margin-top:12px">후반전</div>
+    <div class="opts c2">${[3,4,5].map(i=>`<button class="opt ${d.band===i?'on':''} bl" onclick="setF('band',${i})">${BANDS[i]}</button>`).join('')}</div>
+    <div class="opts" style="margin-top:12px"><button class="opt ${d.band===-1?'on':''} bl" onclick="setF('band',-1)">없음 (무득점)</button></div>`)}
   ${sec('전반전 결과',15,'',opt3('half',['🇰🇷 리드','🤝 무승부',O.flag+' 리드'],[1,0,-1]))}
   ${sec('양 팀 합산 카드 수',15,'',opt3('cards',CARDS,[0,1,2],1))}
   ${sec('MVP 예측',15,'',`<select class="sel" onchange="setF('mvp',this.value||null)"><option value="">* 선택하세요</option>${mvpOpts.map(o=>`<option value="${o.v}" ${d.mvp===o.v?'selected':''}>${o.t}</option>`).join('')}</select>`)}
