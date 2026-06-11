@@ -357,6 +357,11 @@ function demoBar(){
       <button onclick="goalDlg('m1','kr')">골 입력</button>
       <button onclick="finishDlg('m1')">경기종료</button>
       <button onclick="adminPanel()">어드민 패널</button></div>
+    <div class="dl"><span class="dt">이펙트</span>
+      <button onclick="eventFlash('⚽','GOAL!','🇰🇷 손흥민 27분')">⚽ 골 플래시</button>
+      <button onclick="eventFlash('🟨','카드','+1장')">🟨 카드 플래시</button>
+      <button onclick="eventFlash('🏁','경기 종료','최종 채점')">🏁 종료 플래시</button>
+      <button onclick="toast('🦁 이동엽 +40점!');toast('🐯 곽승표 +15점!');toast('🐻 김승현 -15점',true);toast('🦊 김태현 +30점!')">🎉 점수 따다닥(+감점 빨강)</button></div>
     <div class="dl"><span class="dt">기타</span>
       <button onclick="toast('🦁 이동엽 +15점!')">토스트</button>
       <button onclick="toast('🐯 곽승표 -5점',true)">토스트(감점)</button>
@@ -407,7 +412,7 @@ async function refresh(){
   const mid=S.tab;
   const before=(mid!=='total'&&LOADED)?matchScores(S.matches[mid]):null;
   const Lb=(mid!=='total'&&LOADED)?S.matches[mid].live:null;
-  const gBefore=Lb?Lb.goals.length:0, cBefore=Lb?Lb.cards:0;
+  const gBefore=Lb?Lb.goals.length:0, cBefore=Lb?Lb.cards:0, fBefore=Lb?Lb.finished:false;
   const sigBefore=liveSig();
   await fetchAll();
   if(MODAL_OPEN)return;
@@ -417,6 +422,7 @@ async function refresh(){
     const La=S.matches[mid].live, m=MATCHES.find(x=>x.id===mid);
     if(La.goals.length>gBefore){const g=La.goals[La.goals.length-1];eventFlash('⚽','GOAL!',`${g.team==='kr'?'🇰🇷':TEAMS[m.opp].flag} ${esc(g.scorer)} ${g.min}'`);}
     else if(La.cards>cBefore)eventFlash('🟨','카드','+1장');
+    else if(La.finished&&!fBefore)eventFlash('🏁','경기 종료','최종 채점!');
   }
   const prevOrder=lbOrder();
   if(before){
@@ -1055,6 +1061,7 @@ function finishDlg(mid){
 }
 function confirmFinish(mid){
   const mvp=$('#f_mvp').value;closeModal();
+  eventFlash('🏁','경기 종료','최종 채점!');
   withDiff(mid,()=>{const L=S.matches[mid].live;L.finished=true;L.mvp=mvp;});
   window.scrollTo(0,0);
 }
