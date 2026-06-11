@@ -9,14 +9,14 @@
 :root{
   --bg:#0b0f1a; --card:#151b2b; --card2:#1d2538; --line:#2a3450;
   --txt:#e8ecf5; --sub:#8c97b3; --red:#e6394b; --blue:#3b82f6;
-  --gold:#fbbf24; --green:#34d399; --pill:#232c44; --sel:rgba(251,191,36,.12); /* 선택강조 틴트 — 한 곳에서 제어 */
+  --gold:#fbbf24; --green:#34d399; --pill:#232c44; --sel:rgba(251,191,36,.12); --selbd:#fbbf24; /* --sel:선택 틴트, --selbd:선택 테두리 — 한 곳에서 제어 */
   color-scheme:dark; /* 브라우저 기본 컨트롤(화살표·스피너·자동완성 아이콘)을 다크로 */
 }
 /* ===== 라이트 테마 (토글로 전환, 기본은 다크) ===== */
 :root[data-theme="light"]{
   --bg:#f3f4f6; --card:#ffffff; --card2:#f6f7f9; --line:#e6e8ec;
   --txt:#1a1d24; --sub:#868d9a; --red:#e23b4d; --blue:#2f6bdf;
-  --gold:#b8860b; --green:#159b6e; --pill:#eef0f3; --sel:rgba(184,134,11,.10);
+  --gold:#d4880c; --green:#159b6e; --pill:#eef0f3; --sel:rgba(30,34,42,.055); --selbd:#aeb4bf;
   color-scheme:light;
 }
 :root[data-theme="light"] .card{border-color:#ece6db;box-shadow:0 1px 2px rgba(60,50,30,.04),0 8px 20px rgba(60,50,30,.06)}
@@ -73,10 +73,10 @@ header .sub{color:var(--sub);font-size:12px;margin-top:4px}
 .opts{display:grid;gap:8px}
 .opts.c2{grid-template-columns:1fr 1fr}.opts.c3{grid-template-columns:1fr 1fr 1fr}
 .opt{background:var(--card2);border:1.5px solid var(--line);border-radius:12px;padding:14px 10px;font-size:13px;font-weight:600;text-align:center;transition:.12s}
-.opt.on,.opt.on.bl{border-color:var(--gold);background:var(--sel)} /* 선택 상태 골드로 통일 */
+.opt.on,.opt.on.bl{border-color:var(--selbd);background:var(--sel)} /* 선택 상태 */
 .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .pcard{background:var(--card2);border:1.5px solid var(--line);border-radius:12px;padding:13px;text-align:left;transition:.12s}
-.pcard.on{border-color:var(--gold);background:var(--sel)}
+.pcard.on{border-color:var(--selbd);background:var(--sel)}
 .pcard .nm{font-size:13px;font-weight:800;display:flex;justify-content:space-between}
 .pcard .nm em{font-style:normal;font-size:10px;color:var(--sub);font-weight:600}
 .pcard .st{font-size:10px;color:var(--sub);margin-top:3px}
@@ -107,7 +107,7 @@ select.sel{min-height:50px;padding:14px 12px;font-weight:600}
 .lbrow .nm{font-weight:700;font-size:14px;flex:1}
 .lbrow .pts{font-size:18px;font-weight:900;color:var(--gold)}
 .lbrow .pend{font-size:10px;color:var(--sub)}
-.lbrow.first{border-color:var(--gold);background:linear-gradient(135deg,var(--sel),var(--card2))}
+.lbrow.first{border-color:var(--selbd);background:linear-gradient(135deg,var(--sel),var(--card2))}
 .lbrow .det{font-size:10px;color:var(--sub);width:100%}
 .lbrow.gain{animation:gain 1.2s}
 @keyframes gain{0%,100%{box-shadow:none}30%{box-shadow:0 0 0 2px var(--green)}}
@@ -373,26 +373,26 @@ function bandOf(min){return min<=15?0:min<=30?1:min<=45?2:min<=60?3:min<=75?4:5;
 function scorePred(p,f){
   const items=[];
   const add=(label,max,known,pts)=>items.push({label,max,pts:known?pts:0,state:known?(pts>0?'hit':'miss'):'pend'});
-  add('경기 결과',20,'outcome'in f, p.result===f.outcome?20:0);
+  add('경기 결과',60,'outcome'in f, p.result===f.outcome?60:0);
   let sc=0;
   if('outcome'in f){
-    if(p.kr===f.kr&&p.opp===f.opp)sc=25;
-    else if(Math.sign(p.kr-p.opp)===f.outcome)sc=10;
-    else if(p.kr===f.kr||p.opp===f.opp)sc=5;
+    if(p.kr===f.kr&&p.opp===f.opp)sc=70;
+    else if(Math.sign(p.kr-p.opp)===f.outcome)sc=30;
+    else if(p.kr===f.kr||p.opp===f.opp)sc=15;
   }
-  add('최종 스코어',25,'outcome'in f,sc);
-  add('🇰🇷 첫 득점자',15,'krFirst'in f, p.krFirst===f.krFirst?15:0);
-  add('상대 첫 득점자',15,'oppFirst'in f, p.oppFirst===f.oppFirst?15:0);
-  add('첫 골 팀',5,'firstTeam'in f, p.firstTeam===f.firstTeam?5:0);
+  add('최종 스코어',70,'outcome'in f,sc);
+  add('🇰🇷 첫 득점자',40,'krFirst'in f, p.krFirst===f.krFirst?40:0);
+  add('상대 첫 득점자',40,'oppFirst'in f, p.oppFirst===f.oppFirst?40:0);
+  add('첫 골 팀',15,'firstTeam'in f, p.firstTeam===f.firstTeam?15:0);
   let bd=0;
   if('firstBand'in f){
-    if(p.band===f.firstBand)bd=10;
-    else if(p.band>=0&&f.firstBand>=0&&Math.abs(p.band-f.firstBand)===1)bd=5;
+    if(p.band===f.firstBand)bd=30;
+    else if(p.band>=0&&f.firstBand>=0&&Math.abs(p.band-f.firstBand)===1)bd=15;
   }
-  add('첫 골 시간대',10,'firstBand'in f,bd);
-  add('전반전 결과',5,'half'in f, p.half===f.half?5:0);
-  add('카드 수',5,'cards'in f, p.cards===f.cards?5:0);
-  add('MVP',5,'mvp'in f, p.mvp===f.mvp?5:0);
+  add('첫 골 시간대',30,'firstBand'in f,bd);
+  add('전반전 결과',15,'half'in f, p.half===f.half?15:0);
+  add('카드 수',15,'cards'in f, p.cards===f.cards?15:0);
+  add('MVP',15,'mvp'in f, p.mvp===f.mvp?15:0);
   return items;
 }
 function totalOf(items){return items.reduce((s,i)=>s+i.pts,0)}
@@ -459,7 +459,7 @@ function renderMatch(mid){
   </div>`;
 
   if(!M.locked){
-    html+=`<div class="card"><h3>📝 예측 입력 <span class="pt">최대 105점</span></h3>
+    html+=`<div class="card"><h3>📝 예측 입력 <span class="pt">최대 300점</span></h3>
       <div class="hint">직원 인증(이름·사번·전화번호) 후 본인 예측을 입력하세요. 마감 전까지는 서로 안 보입니다 🤫</div>
       ${USER
         ?`<button class="btn ${M.preds[USER]?'g':'b'} w" style="padding:14px" onclick="openForm('${mid}','${USER}')">${avatarOf(USER)} ${esc(pname(USER))} — ${M.preds[USER]?'제출 완료 (수정하기)':'내 예측 입력하기'}</button>`
@@ -488,7 +488,7 @@ function renderMatch(mid){
 
 function rulesCard(){
   return `<div class="card"><h3>📐 배점 규칙</h3><div class="evlog">
-  경기 결과 20점 · 최종 스코어 25점(승패만 10·한 팀만 5) · 양팀 첫 득점자 각 15점 · 첫 골 팀 5점 · 첫 골 시간대 10점(인접 5점) · 전반전 결과 5점 · 카드 수 5점 · MVP 5점 — 합계 105점</div></div>`;
+  경기 결과 60점 · 최종 스코어 70점(승패만 30·한 팀만 15) · 양팀 첫 득점자 각 40점 · 첫 골 팀 15점 · 첫 골 시간대 30점(인접 15점) · 전반전 결과 15점 · 카드 수 15점 · MVP 15점 — 합계 300점</div></div>`;
 }
 function liveCard(mid,m,O,M){
   const L=M.live;
@@ -581,7 +581,7 @@ function renderTotal(){
     });
   });
   const rows=S.participants.map(p=>({p,...totals[p.id]})).sort((a,b)=>b.t-a.t);
-  let html=`<div class="card"><h3>🏆 종합 순위 <span class="pt">3경기 합산 · 최대 315점</span></h3>`;
+  let html=`<div class="card"><h3>🏆 종합 순위 <span class="pt">3경기 합산 · 최대 900점</span></h3>`;
   if(!rows.length)html+='<div class="hint">참여자가 없습니다</div>';
   html+=rows.map((r,i)=>{
     const last=rows.length>=3&&i===rows.length-1&&r.t>0;
