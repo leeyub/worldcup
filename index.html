@@ -10,7 +10,11 @@
   --bg:#0b0f1a; --card:#151b2b; --card2:#1d2538; --line:#2a3450;
   --txt:#e8ecf5; --sub:#8c97b3; --red:#e6394b; --blue:#3b82f6;
   --gold:#fbbf24; --green:#34d399; --pill:#232c44;
+  color-scheme:dark; /* 브라우저 기본 컨트롤(화살표·스피너·자동완성 아이콘)을 다크로 */
 }
+/* 숫자 입력 스피너 제거 (골 시간 입력 등) */
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{background:var(--bg);color:var(--txt);font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;padding-bottom:60px}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
@@ -54,8 +58,7 @@ header .sub{color:var(--sub);font-size:12px;margin-top:4px}
 .opts{display:grid;gap:8px}
 .opts.c2{grid-template-columns:1fr 1fr}.opts.c3{grid-template-columns:1fr 1fr 1fr}
 .opt{background:var(--card2);border:1.5px solid var(--line);border-radius:12px;padding:11px 8px;font-size:13px;font-weight:600;text-align:center;transition:.12s}
-.opt.on{border-color:var(--red);background:rgba(230,57,75,.14)}
-.opt.on.bl{border-color:var(--blue);background:rgba(59,130,246,.14)}
+.opt.on,.opt.on.bl{border-color:var(--gold);background:rgba(251,191,36,.12)} /* 선택 상태 골드로 통일 */
 .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .pcard{background:var(--card2);border:1.5px solid var(--line);border-radius:12px;padding:10px;text-align:left;transition:.12s}
 .pcard.on{border-color:var(--gold);background:rgba(251,191,36,.1)}
@@ -71,6 +74,7 @@ header .sub{color:var(--sub);font-size:12px;margin-top:4px}
 .stepper button{width:36px;height:36px;border-radius:10px;background:var(--pill);border:1px solid var(--line);font-size:18px;font-weight:800}
 .stepper .v{font-size:26px;font-weight:900;min-width:30px;text-align:center}
 select.sel,input.txtin{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;color:var(--txt);font-size:14px}
+select.sel{min-height:50px;padding:14px 12px;font-weight:600}
 .brow{padding:10px 0;border-bottom:1px solid var(--line)}
 .brow:last-child{border:none}
 .brow .bl{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:6px}
@@ -109,10 +113,17 @@ select.sel,input.txtin{width:100%;background:var(--card2);border:1px solid var(-
 .foot{text-align:center;color:var(--sub);font-size:11px;margin-top:24px;line-height:1.8}
 .crown{font-size:16px}
 .tag{font-size:10px;background:var(--pill);border-radius:6px;padding:2px 6px;color:var(--sub)}
+.taggrp{display:flex;flex-direction:column;gap:3px;align-items:flex-start}
 .warnbox{background:rgba(230,57,75,.1);border:1px solid rgba(230,57,75,.4);border-radius:12px;padding:10px 12px;font-size:12px;color:#fca5a5;margin-bottom:12px}
 #errbar{display:none;background:#7f1d1d;color:#fecaca;font-size:12px;font-weight:700;text-align:center;padding:8px}
 #loading{text-align:center;padding:60px 0;color:var(--sub);font-size:14px}
 .sync{font-size:10px;color:var(--sub);text-align:center;margin-top:4px}
+/* ---- DEMO MODE ---- */
+.demobar{position:fixed;left:0;right:0;bottom:0;z-index:300;background:#05080f;border-top:1px solid var(--gold);padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px}
+.demobar .dl{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.demobar .dt{color:var(--gold);font-weight:800;font-size:10px;min-width:32px}
+.demobar button{background:var(--pill);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer}
+.demobar button.on{border-color:var(--gold);color:var(--gold)}
 </style>
 </head>
 <body>
@@ -173,9 +184,96 @@ const MATCHES = [
 const BANDS=['0~15분','16~30분','31~45분+','46~60분','61~75분','76~90분+'];
 const CARDS=['0~2장','3~5장','6장 이상'];
 const AVATARS=['🦁','🐯','🐻','🦊','🐶','🐱','🐼','🐸','🐵','🦄','🐷','🐨'];
+const EMOJIS=['🦁','🐯','🐻','🦊','🐶','🐱','🐼','🐸','🐵','🦄','🐷','🐨','🐔','🐺','🦅','🦉','⚽','🔥','🚀','👑','🎯','😎','🤖','👻'];
+
+/* ================= DEMO MODE (?demo) =================
+   사이트주소/?demo 로 열면 가짜 데이터로 모든 화면 상태를
+   전환해볼 수 있는 디자인 검토 모드. 실제 DB는 건드리지 않음. */
+const DEMO_MODE = new URLSearchParams(location.search).has('demo');
+function demoPredData(i){
+  const krF=['손흥민','조규성','이강인','손흥민','황희찬','손흥민','오현규','김민재'][i];
+  const opF=['P. 시크','없음','J. 쿠흐타','P. 시크','T. 소우체크','없음','P. 시크','A. 흘로젝'][i];
+  return {result:[1,1,0,1,-1,1,1,0][i], kr:[2,1,1,3,0,2,1,1][i], opp:[0,0,1,1,1,1,0,1][i],
+    krFirst:krF, oppFirst:opF, firstTeam:['kr','kr','opp','kr','opp','kr','kr','none'][i],
+    band:[1,0,2,1,3,-1,4,2][i], half:[1,0,0,1,-1,1,0,0][i], cards:[1,0,1,2,1,0,1,1][i],
+    mvp:['손흥민','손흥민','이강인','김민재','P. 시크','조규성','손흥민','황인범'][i],
+    comment:['오늘 손흥민 해트트릭 갑니다','무조건 이긴다','중원 싸움이 관건','3:1 압승 예상','현실적으로 어렵다','','닥공 가즈아',''][i]};
+}
+const DEMO_PARTS=['이동엽','곽승표','김승현','김태현','민화빈','이상화','이도현','이호민'].map((n,i)=>({id:'u'+(i+1),name:n,emp:'11134'+(48+i),phone:'010111122'+(10+i),emoji:i===0?'🚀':null,created_at:i}));
+const demoDB = {
+  participants: DEMO_PARTS.slice(),
+  settings:[{key:'admin_pin',value:'3535'}],
+  match_state:['m1','m2','m3'].map(id=>({match_id:id,locked:false,live:{on:false,goals:[],cards:0,half:null,finished:false,mvp:null}})),
+  predictions:[]
+};
+function demoClient(){
+  function table(name){
+    return {
+      select(){const q={order(){return Promise.resolve({data:demoDB[name],error:null})},eq(k,v){q._f=[k,v];return q},single(){return Promise.resolve({data:demoDB[name].find(x=>x[q._f[0]]===q._f[1]),error:null})},then(res){res({data:demoDB[name],error:null})}};return q;},
+      insert(row){demoDB[name].push({id:'d'+Date.now(),created_at:Date.now(),...row});return Promise.resolve({error:null});},
+      update(patch){return{eq(k,v){const r=demoDB[name].find(x=>x[k]===v);if(r)Object.assign(r,patch);return Promise.resolve({error:null});}};},
+      upsert(row){
+        if(name==='predictions'){const ex=demoDB[name].find(x=>x.match_id===row.match_id&&x.participant_id===row.participant_id);if(ex)Object.assign(ex,row);else demoDB[name].push(row);}
+        else {const ex=demoDB[name].find(x=>x.key===row.key);if(ex)Object.assign(ex,row);else demoDB[name].push(row);}
+        return Promise.resolve({error:null});},
+      delete(){return{eq(k,v){demoDB[name]=demoDB[name].filter(x=>x[k]!==v);return Promise.resolve({error:null});},neq(){demoDB[name]=[];return Promise.resolve({error:null});}};}
+    };
+  }
+  return {from:table};
+}
+let DEMOSEL={role:'admin',state:'locked'};
+function demoRole(r){
+  DEMOSEL.role=r;
+  if(r==='none'){USER=null;ADMIN=false;}
+  else if(r==='user'){USER='u1';ADMIN=false;}
+  else {USER='u1';ADMIN=true;}
+  render();demoBar();
+}
+async function demoState(s){
+  DEMOSEL.state=s;
+  const ms=demoDB.match_state.find(x=>x.match_id==='m1');
+  demoDB.predictions=demoDB.predictions.filter(p=>p.match_id!=='m1');
+  const add=n=>{for(let i=0;i<n;i++)demoDB.predictions.push({match_id:'m1',participant_id:'u'+(i+1),data:demoPredData(i)});};
+  const goals3=[{team:'kr',scorer:'손흥민',min:23},{team:'opp',scorer:'P. 시크',min:55},{team:'kr',scorer:'이강인',min:80}];
+  ms.locked=false; ms.live={on:false,goals:[],cards:0,half:null,finished:false,mvp:null};
+  if(s==='pred3'){add(3);}
+  else if(s==='locked'){add(8);ms.locked=true;}
+  else if(s==='live1'){add(8);ms.locked=true;ms.live={on:true,goals:goals3.slice(0,1),cards:1,half:null,finished:false,mvp:null};}
+  else if(s==='live2'){add(8);ms.locked=true;ms.live={on:true,goals:goals3,cards:3,half:{kr:1,opp:0},finished:false,mvp:null};}
+  else if(s==='fin'){add(8);ms.locked=true;ms.live={on:true,goals:goals3,cards:3,half:{kr:1,opp:0},finished:true,mvp:'손흥민'};}
+  else if(s==='fin0'){add(8);ms.locked=true;ms.live={on:true,goals:[],cards:2,half:{kr:0,opp:0},finished:true,mvp:'김민재'};}
+  S.tab='m1';
+  await fetchAll();render();demoBar();
+}
+async function demoEmpty(){
+  demoDB.participants = demoDB.participants.length ? [] : DEMO_PARTS.slice();
+  await fetchAll();render();
+}
+function demoErr(){err('(데모) 서버 연결 실패 표시 예시 — 5초 후 사라짐');setTimeout(errClear,5000);}
+function demoBar(){
+  let bar=document.querySelector('#demobar');
+  if(!bar){bar=document.createElement('div');bar.id='demobar';bar.className='demobar';document.body.appendChild(bar);document.body.style.paddingBottom='150px';}
+  const rb=(v,l)=>`<button class="${DEMOSEL.role===v?'on':''}" onclick="demoRole('${v}')">${l}</button>`;
+  const sbn=(v,l)=>`<button class="${DEMOSEL.state===v?'on':''}" onclick="demoState('${v}')">${l}</button>`;
+  bar.innerHTML=`
+    <div class="dl"><span class="dt">DEMO</span><span style="font-size:10px;color:var(--sub)">디자인 검토 모드 · 실제 데이터에 영향 없음</span></div>
+    <div class="dl"><span class="dt">역할</span>${rb('none','비로그인')}${rb('user','참여자')}${rb('admin','어드민')}</div>
+    <div class="dl"><span class="dt">상태</span>${sbn('pred0','예측 0명')}${sbn('pred3','제출 3/8')}${sbn('locked','마감')}${sbn('live1','전반 LIVE')}${sbn('live2','후반 LIVE')}${sbn('fin','종료 2:1')}${sbn('fin0','종료 0:0')}</div>
+    <div class="dl"><span class="dt">모달</span>
+      <button onclick="empLoginDlg(null)">로그인</button>
+      <button onclick="openForm('m1','u1')">예측폼</button>
+      <button onclick="goalDlg('m1','kr')">골 입력</button>
+      <button onclick="finishDlg('m1')">경기종료</button>
+      <button onclick="adminPanel()">어드민 패널</button></div>
+    <div class="dl"><span class="dt">기타</span>
+      <button onclick="toast('🚀 이동엽 +15점!')">토스트</button>
+      <button onclick="toast('🐯 곽승표 -5점',true)">토스트(감점)</button>
+      <button onclick="demoErr()">에러 배너</button>
+      <button onclick="demoEmpty()">참여자 0명 토글</button></div>`;
+}
 
 /* ================= STATE ================= */
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = DEMO_MODE ? demoClient() : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 function blankLive(){return {on:false,goals:[],cards:0,half:null,finished:false,mvp:null};}
 let S = {participants:[],pin:null,tab:'m1',matches:{m1:{preds:{},locked:false,live:blankLive()},m2:{preds:{},locked:false,live:blankLive()},m3:{preds:{},locked:false,live:blankLive()}}};
 let LOADED=false, MODAL_OPEN=false, BUSY=false;
@@ -195,7 +293,7 @@ async function fetchAll(){
   const bad=[pr,st,ms,pd].find(r=>r.error);
   if(bad){err('서버 연결 실패: '+bad.error.message+' — index.html 상단의 SUPABASE 설정 두 줄을 확인하세요');throw bad.error;}
   errClear();
-  S.participants=pr.data.map(p=>({id:p.id,name:p.name,emp:p.emp,phone:p.phone}));
+  S.participants=pr.data.map(p=>({id:p.id,name:p.name,emp:p.emp,phone:p.phone,emoji:p.emoji||null}));
   const pinRow=st.data.find(r=>r.key==='admin_pin'); S.pin=pinRow?pinRow.value:null;
   for(const m of MATCHES){
     const row=ms.data.find(r=>r.match_id===m.id);
@@ -308,7 +406,18 @@ function renderTabs(){
     return `<button class="tab ${S.tab===m.id?'on':''}" onclick="S.tab='${m.id}';render()">${m.label} ${TEAMS[m.opp].flag}<span class="d">${st}</span></button>`;
   }).join('')+`<button class="tab ${S.tab==='total'?'on':''}" onclick="S.tab='total';render()">🏆 종합<span class="d">순위</span></button>`;
 }
-function avatarOf(pid){const i=S.participants.findIndex(p=>p.id===pid);return AVATARS[i>=0?i%AVATARS.length:0];}
+function avatarOf(pid){
+  const p=S.participants.find(x=>x.id===pid);
+  if(p&&p.emoji)return p.emoji;
+  const i=S.participants.findIndex(x=>x.id===pid);
+  return AVATARS[i>=0?i%AVATARS.length:0];
+}
+function emojiSelect(id,current){
+  return `<select class="sel" id="${id}" style="width:auto;min-width:70px;padding:10px 8px">
+    <option value="">자동</option>
+    ${EMOJIS.map(e=>`<option value="${e}" ${current===e?'selected':''}>${e}</option>`).join('')}
+  </select>`;
+}
 function pname(pid){const p=S.participants.find(p=>p.id===pid);return p?p.name:'?';}
 
 function renderMatch(mid){
@@ -341,6 +450,9 @@ function renderMatch(mid){
       <div class="hint">킥오프 직전에 어드민이 마감하세요. 마감하면 수정 불가, 전원의 예측이 공개됩니다.</div>
       <button class="btn p w" ${cnt<1?'disabled':''} onclick="lockMatch('${mid}')">예측 마감하기 (${cnt}/${S.participants.length}명 제출)</button>
     </div>`;
+    // 마감 전에도 결과(라이브) 입력 가능
+    if(L.finished) html+=resultCard(mid,m,O,M);
+    else if(L.on||ADMIN) html+=liveCard(mid,m,O,M);
     html+=rulesCard();
   }else{
     if(!L.finished){
@@ -488,13 +600,14 @@ function adminPanel(){
   showModal(`<div class="mbar"><button class="btn g" onclick="closeModal();render()">✕</button><h2>⚙️ 어드민 관리</h2></div>
   <div class="card"><h3>👥 직원 등록 <span class="pt">${S.participants.length}명</span></h3>
     <div class="hint">이름·사번·전화번호를 등록하세요. 세 가지가 모두 일치해야 로그인할 수 있습니다.</div>
-    ${S.participants.map(p=>`<div class="lbrow" style="flex-wrap:wrap"><span class="nm">${avatarOf(p.id)} ${esc(p.name)}</span><span class="tag">사번 ${esc(p.emp)}</span><span class="tag">📱 ${esc(p.phone)}</span><button class="btn g" style="padding:6px 10px;font-size:12px" onclick="editPart('${p.id}')">수정</button><button class="btn g" style="padding:6px 10px;font-size:12px" onclick="delPart('${p.id}')">삭제</button></div>`).join('')}
+    ${S.participants.map(p=>`<div class="lbrow"><span class="nm">${avatarOf(p.id)} ${esc(p.name)}</span><div class="taggrp"><span class="tag">사번 ${esc(p.emp)}</span><span class="tag">📱 ${esc(p.phone)}</span></div><button class="btn g" style="padding:6px 10px;font-size:12px" onclick="editPart('${p.id}')">수정</button><button class="btn g" style="padding:6px 10px;font-size:12px" onclick="delPart('${p.id}')">삭제</button></div>`).join('')}
     <div class="addrow" style="flex-wrap:wrap">
       <input id="adm_name" placeholder="이름" maxlength="8" style="flex:1;min-width:90px">
       <input id="adm_emp" placeholder="사번" maxlength="12" style="flex:1;min-width:90px">
     </div>
     <div class="addrow">
       <input id="adm_phone" placeholder="전화번호 (예: 01012345678)" maxlength="13" inputmode="numeric" onkeydown="if(event.key==='Enter')addPart()">
+      ${emojiSelect('adm_emoji',null)}
       <button class="btn b" onclick="addPart()">등록</button>
     </div>
   </div>
@@ -516,9 +629,14 @@ async function changePin(){
 }
 async function addPart(){
   const n=$('#adm_name').value.trim(), e=$('#adm_emp').value.trim(), ph=$('#adm_phone').value.replace(/\D/g,'');
+  const em=$('#adm_emoji')?$('#adm_emoji').value:'';
   if(!n||!e||!ph){alert('이름·사번·전화번호를 모두 입력하세요');return;}
   if(ph.length<10){alert('전화번호를 확인하세요');return;}
-  const {error}=await sb.from('participants').insert({name:n,emp:e,phone:ph});
+  let {error}=await sb.from('participants').insert({name:n,emp:e,phone:ph,emoji:em||null});
+  if(error&&/emoji/.test(error.message)){
+    alert('⚠️ 이모지 컬럼이 아직 DB에 없어 이모지 없이 등록합니다.\nSupabase SQL Editor에서 다음을 실행하세요:\nalter table participants add column if not exists emoji text;');
+    ({error}=await sb.from('participants').insert({name:n,emp:e,phone:ph}));
+  }
   if(error){alert('등록 실패 (중복 이름/사번일 수 있음): '+error.message);return;}
   await fetchAll();adminPanel();toast('등록 완료!');
 }
@@ -527,14 +645,21 @@ function editPart(pid){
   showModal(`<div class="card"><h3>✏️ ${avatarOf(pid)} ${esc(p.name)} 정보 수정</h3>
     <input class="txtin" id="ed_name" value="${esc(p.name)}" placeholder="이름" maxlength="8" style="margin-bottom:8px">
     <input class="txtin" id="ed_emp" value="${esc(p.emp)}" placeholder="사번" maxlength="12" style="margin-bottom:8px">
-    <input class="txtin" id="ed_phone" value="${esc(p.phone)}" placeholder="전화번호" inputmode="numeric">
+    <input class="txtin" id="ed_phone" value="${esc(p.phone)}" placeholder="전화번호" inputmode="numeric" style="margin-bottom:8px">
+    <div style="font-size:12px;color:var(--sub);margin-bottom:4px">아바타 이모지</div>
+    ${emojiSelect('ed_emoji',p.emoji)}
     <button class="btn b w" onclick="editPartSave('${pid}')">저장</button>
     <button class="btn g w" onclick="adminPanel()">취소</button></div>`);
 }
 async function editPartSave(pid){
   const n=$('#ed_name').value.trim(), e=$('#ed_emp').value.trim(), ph=$('#ed_phone').value.replace(/\D/g,'');
+  const em=$('#ed_emoji')?$('#ed_emoji').value:'';
   if(!n||!e||!ph||ph.length<10){alert('모든 항목을 올바르게 입력하세요');return;}
-  const {error}=await sb.from('participants').update({name:n,emp:e,phone:ph}).eq('id',pid);
+  let {error}=await sb.from('participants').update({name:n,emp:e,phone:ph,emoji:em||null}).eq('id',pid);
+  if(error&&/emoji/.test(error.message)){
+    alert('⚠️ 이모지 컬럼이 아직 DB에 없어 이모지 제외하고 저장합니다.\nSupabase SQL Editor에서 다음을 실행하세요:\nalter table participants add column if not exists emoji text;');
+    ({error}=await sb.from('participants').update({name:n,emp:e,phone:ph}).eq('id',pid));
+  }
   if(error){alert('수정 실패: '+error.message);return;}
   await fetchAll();adminPanel();toast('수정 완료!');
 }
@@ -768,6 +893,12 @@ function closeModal(){MODAL_OPEN=false;$('#modal').classList.remove('show');docu
 
 /* ================= INIT ================= */
 (async()=>{
+  if(DEMO_MODE){
+    USER='u1';ADMIN=true;
+    await demoState('locked'); // 기본: 마감 상태(비교보드 노출)
+    demoBar();
+    return;
+  }
   if(SUPABASE_URL.includes('붙여넣기')){err('아직 설정 전입니다 — index.html 상단의 SUPABASE_URL과 SUPABASE_ANON_KEY를 입력하세요 (설치가이드 참고)');return;}
   try{await fetchAll();render();}
   catch(e){console.error(e);}
