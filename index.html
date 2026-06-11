@@ -159,6 +159,12 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .lbrow.open .breakdown{display:block}
 .bd-it{display:flex;justify-content:space-between;padding:2px 0}
 .bd-it.hit{color:var(--green)} .bd-it.miss{color:#f87171} .bd-it.pend{color:var(--sub)}
+/* 어드민: 참여자별 예측 */
+.apred{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;background:var(--card2)}
+.apred:last-child{margin-bottom:0}
+.apred .apname{font-size:13px;font-weight:800;margin-bottom:6px}
+.apred .bd-it{font-size:12px;color:var(--sub);padding:3px 0;gap:12px}
+.apred .bd-it span:last-child{color:var(--txt);font-weight:600;text-align:right}
 .evlog{font-size:12px;color:var(--sub);line-height:1.9}
 #toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
 .toast{background:linear-gradient(135deg,#14532d,#166534);color:#d1fae5;border:1px solid var(--green);padding:8px 16px;border-radius:99px;font-size:13px;font-weight:800;animation:tin .3s, tout .4s 2.6s forwards}
@@ -212,7 +218,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 <div class="wrap">
   <div class="tabs" id="tabs"></div>
   <main id="app"><div id="loading">⏳ 불러오는 중...</div></main>
-  <div class="foot">각자 폰으로 접속해서 예측하세요 · 5초마다 자동 새로고침됩니다</div>
+  <div class="foot">각자 폰으로 접속해서 예측하세요 · 변동 시 자동으로 갱신됩니다</div>
 </div>
 <div id="modal"></div>
 <div id="toasts"></div>
@@ -629,7 +635,7 @@ function liveCard(mid,m,O,M){
       html+=`<div class="hint">킥오프하면 어드민이 시작하세요.<br>골·카드를 입력할 때마다 모두의 화면에서 순위가 실시간으로 바뀝니다.</div>
       <button class="btn p w" onclick="startLive('${mid}')">▶ 라이브 시작 (킥오프!)</button></div>`;
     }else{
-      html+=`<div class="hint">킥오프 후 어드민이 라이브를 시작하면 골·카드가 실시간으로 점수에 반영됩니다.<br>화면은 5초마다 자동 갱신돼요.</div></div>`;
+      html+=`<div class="hint">킥오프 후 어드민이 라이브를 시작하면 골·카드가 실시간으로 점수에 반영됩니다.</div></div>`;
     }
     return html;
   }
@@ -643,7 +649,7 @@ function liveCard(mid,m,O,M){
       <button class="btn p full" onclick="finishDlg('${mid}')">🏁 경기 종료 → 최종 채점</button>
     </div>`;
   }else{
-    html+=`<div class="hint">어드민이 골·카드를 입력하면 자동으로 점수에 반영됩니다.<br>화면은 5초마다 갱신돼요.</div>`;
+    html+=`<div class="hint">어드민이 골·카드를 입력하면 자동으로 점수·순위에 반영됩니다.</div>`;
   }
   html+=`<div style="margin-top:10px" class="evlog">${L.goals.map(g=>`⚽ ${g.min}' ${g.team==='kr'?'🇰🇷':O.flag} ${esc(g.scorer)}`).join('<br>')||'아직 이벤트 없음'} ${L.cards?`<br>🟨 카드 ${L.cards}장`:''}</div>
   </div>`;
@@ -795,6 +801,33 @@ function adminTry(){
   }else alert('비밀번호가 틀렸습니다');
 }
 function adminLogout(){ADMIN=false;sessionStorage.removeItem('wc_admin');closeModal();render();toast('어드민 로그아웃 완료');}
+// 한 명의 예측을 라벨·값 배열로
+function fmtPred(p,O){
+  const on=O.name;
+  const res=v=>v===1?'🇰🇷 승':v===0?'무':on+' 승';
+  const ft=v=>v==='kr'?'🇰🇷 한국':v==='opp'?O.flag+' '+on:'무득점';
+  return [['경기 결과',res(p.result)],['스코어',p.kr+':'+p.opp],['🇰🇷 첫 득점자',p.krFirst||'-'],
+    [O.flag+' 첫 득점자',p.oppFirst||'-'],['첫 골 팀',ft(p.firstTeam)],['첫 골 시간대',bandTxt(p.band)],
+    ['전반전',res(p.half)],['카드 수',CARDS[p.cards]],['MVP',p.mvp||'-']];
+}
+// 어드민 패널: 참여자별 제출 예측 보기 (경기 탭)
+function adminPredsCard(){
+  const mid=(S.adminPredTab&&S.matches[S.adminPredTab])?S.adminPredTab:(S.tab||'m1');
+  const m=MATCHES.find(x=>x.id===mid),O=TEAMS[m.opp],M=S.matches[mid];
+  const subs=S.participants.filter(p=>M.preds[p.id]);
+  const tabs=MATCHES.map(mm=>`<button class="btab ${mm.id===mid?'on':''}" onclick="S.adminPredTab='${mm.id}';adminPanel()">${mm.label}</button>`).join('');
+  let body;
+  if(!subs.length) body=`<div class="hint" style="margin:0">아직 제출한 참여자가 없어요</div>`;
+  else body=subs.map(p=>{
+    const pr=M.preds[p.id];
+    const rows=fmtPred(pr,O).map(([l,v])=>`<div class="bd-it"><span>${l}</span><span>${esc(String(v))}</span></div>`).join('');
+    const cmt=pr.comment?`<div class="bd-it"><span>한 줄</span><span>${esc(pr.comment)}</span></div>`:'';
+    return `<div class="apred"><div class="apname">${avatarOf(p.id)} ${esc(p.name)}</div>${rows}${cmt}</div>`;
+  }).join('');
+  return `<div class="card"><h3>📋 참여자별 예측 <span class="pt">${subs.length}/${S.participants.length}</span></h3>
+    <div class="hint">마감 전에도 어드민은 각자 제출 내용을 볼 수 있어요.</div>
+    <div class="btabs">${tabs}</div>${body}</div>`;
+}
 function adminPanel(){
   if(!ADMIN)return adminGate(adminPanel);
   showModal(`<div class="mbar"><button class="btn g" onclick="closeModal();render()">✕</button><h2>⚙️ 어드민 관리</h2></div>
@@ -811,6 +844,7 @@ function adminPanel(){
       <button class="btn b" onclick="addPart()">등록</button>
     </div>
   </div>
+  ${adminPredsCard()}
   <div class="card"><h3>🔑 어드민 비밀번호 변경</h3>
     <div class="hint">초기 비밀번호(3535)는 꼭 변경하세요!</div>
     <div class="addrow"><input id="adm_newpin" type="password" placeholder="새 비밀번호 (4자 이상)"><button class="btn g" onclick="changePin()">변경</button></div>
