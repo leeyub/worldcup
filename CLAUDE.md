@@ -7,6 +7,8 @@
 
 - **index.html 단일 파일** — HTML+CSS+JS 전부. 프레임워크/빌드 없음. 이 구조를 유지할 것.
 - **호스팅**: Vercel ← GitHub `leeyub/worldcup` repo 연동 (main에 커밋하면 자동 배포)
+  - 운영(main): `skt35-worldcup.vercel.app` · 데모: `skt35-worldcup.vercel.app/demo`
+  - dev 미리보기: `dev-skt35-worldcup.vercel.app` (dev 브랜치 작업본, `/demo`도 가능)
 - **데이터**: Supabase (`https://iutmevindlhmupgzavci.supabase.co`)
   - 테이블: `participants`(직원: name/emp/phone/emoji), `predictions`(match_id+participant_id+data jsonb), `match_state`(locked, live jsonb), `settings`(admin_pin)
   - anon key는 index.html에 하드코딩 (공개되어도 되는 키, RLS 전체 허용 정책 — 친구용 게임이라 의도된 설계)
@@ -28,9 +30,10 @@
 - 서체: Pretendard (폴백 Apple SD Gothic Neo, Noto Sans KR)
 - Figma 시안: https://www.figma.com/design/rRpMgp4f0XUVpEkpcjIJZl (4개 프레임 + Theme 컬러 변수)
 
-## ?demo 모드 (디자인 검토용)
+## 데모 모드 (디자인 검토용)
 
-`주소/?demo`로 열면 가짜 데이터 + 하단 골드 패널로 모든 상태 전환 가능 (역할 3종 × 경기상태 7종 × 모달 × 토스트/에러/빈상태). 실제 DB 안 건드림. **UI 수정 후엔 반드시 ?demo로 상태별 확인.** 상세 체크리스트는 `상태인벤토리.md`.
+`주소/demo` 또는 `주소/?demo`로 열면 가짜 데이터 + 하단 골드 패널로 모든 상태 전환 가능 (역할 3종 × 경기상태 7종 × 모달 × 토스트/에러/빈상태). 실제 DB 안 건드림. **UI 수정 후엔 반드시 /demo로 상태별 확인.** 상세 체크리스트는 `상태인벤토리.md`.
+- 감지 로직: index.html의 `DEMO_MODE`(`?demo` 쿼리 또는 `/demo` 경로). `/demo` 경로는 `vercel.json` rewrite로 index.html에 연결됨.
 
 ## 백로그 (오너 요청, 우선순위 순)
 
@@ -39,6 +42,13 @@
 3. **서체 교체 실험** — SUIT, Wanted Sans 등 후보 비교
 4. **비교 보드 개선** — 다수파 픽 묶어서 표시(예: "🇰🇷 승 6명"), 단독 픽만 🦄 강조
 5. (선택) 로그인 시각 기록
+
+## 작업 흐름 — "pull해줘" / "push해줘" (오너 약속)
+
+오너는 자연어 대신 이 두 명령으로 세션 시작·종료를 퉁친다. 아래를 그대로 수행할 것.
+
+- **"pull해줘"** (앉을 때 = 작업 시작): ① `dev` 브랜치인지 확인 → ② `git pull origin dev`로 원격 최신 동기화(다른 탭·기기 작업 반영) → ③ `작업로그.md` 맨 위 항목을 요약해 "지난번 여기까지 했음" 한 줄 보고.
+- **"push해줘"** (일어날 때 = 작업 종료): ① 이번 세션에 한 일을 `작업로그.md` 맨 위에 날짜(KST)와 함께 한 항목 추가 → ② `dev`에 커밋 → ③ `git push origin dev`. **운영 배포(main 머지)는 안 함** — 그건 "배포해줘"일 때만.
 
 ## 운영 메모
 
