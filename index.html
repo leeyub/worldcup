@@ -186,10 +186,11 @@ const CARDS=['0~2장','3~5장','6장 이상'];
 const AVATARS=['🦁','🐯','🐻','🦊','🐶','🐱','🐼','🐸','🐵','🦄','🐷','🐨'];
 const EMOJIS=['🦁','🐯','🐻','🦊','🐶','🐱','🐼','🐸','🐵','🦄','🐷','🐨','🐔','🐺','🦅','🦉','⚽','🔥','🚀','👑','🎯','😎','🤖','👻'];
 
-/* ================= DEMO MODE (?demo) =================
-   사이트주소/?demo 로 열면 가짜 데이터로 모든 화면 상태를
-   전환해볼 수 있는 디자인 검토 모드. 실제 DB는 건드리지 않음. */
-const DEMO_MODE = new URLSearchParams(location.search).has('demo');
+/* ================= DEMO MODE (?demo 또는 /dev) =================
+   사이트주소/?demo 또는 사이트주소/dev 로 열면 가짜 데이터로 모든
+   화면 상태를 전환해볼 수 있는 디자인 검토 모드. 실제 DB는 건드리지 않음. */
+const DEMO_MODE = new URLSearchParams(location.search).has('demo')
+  || location.pathname.replace(/\/+$/,'') === '/dev';
 function demoPredData(i){
   const krF=['손흥민','조규성','이강인','손흥민','황희찬','손흥민','오현규','김민재'][i];
   const opF=['P. 시크','없음','J. 쿠흐타','P. 시크','T. 소우체크','없음','P. 시크','A. 흘로젝'][i];
