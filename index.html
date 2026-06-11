@@ -12,6 +12,21 @@
   --gold:#fbbf24; --green:#34d399; --pill:#232c44;
   color-scheme:dark; /* 브라우저 기본 컨트롤(화살표·스피너·자동완성 아이콘)을 다크로 */
 }
+/* ===== 라이트 테마 (토글로 전환, 기본은 다크) ===== */
+:root[data-theme="light"]{
+  --bg:#f4f1ec; --card:#ffffff; --card2:#faf8f4; --line:#e7e1d7;
+  --txt:#22262f; --sub:#79808f; --red:#e23b4d; --blue:#2f6bdf;
+  --gold:#cf960a; --green:#15916a; --pill:#efeae1;
+  color-scheme:light;
+}
+:root[data-theme="light"] .card{border-color:#ece6db;box-shadow:0 1px 2px rgba(60,50,30,.04),0 8px 20px rgba(60,50,30,.06)}
+:root[data-theme="light"] .lbrow{box-shadow:0 1px 2px rgba(60,50,30,.04),0 4px 12px rgba(60,50,30,.05)}
+:root[data-theme="light"] .tab{box-shadow:0 1px 2px rgba(60,50,30,.04)}
+:root[data-theme="light"] .tab.on{background:linear-gradient(135deg,#e9effc,#dce6fb);color:#1d4ed8}
+:root[data-theme="light"] #modal{background:rgba(35,35,45,.42)}
+:root[data-theme="light"] .warnbox{color:#b3261e}
+.themebtn{font-size:16px;line-height:1;padding:6px 8px;border-radius:8px;color:var(--sub)}
+.themebtn:active{background:var(--pill)}
 /* 숫자 입력 스피너 제거 (골 시간 입력 등) */
 input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 input[type=number]{-moz-appearance:textfield;appearance:textfield}
@@ -125,10 +140,14 @@ select.sel{min-height:50px;padding:14px 12px;font-weight:600}
 .demobar button{background:var(--pill);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer}
 .demobar button.on{border-color:var(--gold);color:var(--gold)}
 </style>
+<script>/* 첫 페인트 전에 저장된 테마 적용(깜빡임 방지) */(function(){try{var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 </head>
 <body>
 <div id="errbar"></div>
-<div class="topbar" id="topbar"></div>
+<div class="topbar">
+  <button class="toplink themebtn" id="themeBtn" onclick="toggleTheme()" aria-label="라이트/다크 테마 전환" style="margin-right:auto">🌙</button>
+  <span id="topbar" style="display:contents"></span>
+</div>
 <header>
   <h1>⚽ SKT 35기 월드컵응원단</h1>
   <div class="sub">2026 월드컵 · A조 대한민국 조별리그 3경기 예측 리그 🍻</div>
@@ -891,6 +910,19 @@ function copyResult(mid){
 /* ---------- 모달 ---------- */
 function showModal(html){MODAL_OPEN=true;$('#modal').innerHTML=`<div class="mbox">${html}</div>`;$('#modal').classList.add('show');$('#modal').scrollTop=0;document.body.style.overflow='hidden';}
 function closeModal(){MODAL_OPEN=false;$('#modal').classList.remove('show');document.body.style.overflow='';}
+
+/* ---------- 테마 토글 (라이트/다크, 선택은 localStorage 저장) ---------- */
+function toggleTheme(){
+  const next=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+  document.documentElement.setAttribute('data-theme',next);
+  try{localStorage.setItem('theme',next);}catch(e){}
+  syncThemeBtn();
+}
+function syncThemeBtn(){
+  const light=document.documentElement.getAttribute('data-theme')==='light';
+  const b=document.getElementById('themeBtn'); if(b) b.textContent=light?'☀️':'🌙';
+}
+syncThemeBtn();
 
 /* ================= INIT ================= */
 (async()=>{
