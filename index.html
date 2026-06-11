@@ -698,7 +698,7 @@ function openForm(mid,pid){
 function drawForm(){
   const m=MATCHES.find(x=>x.id===F.mid),O=TEAMS[m.opp],d=F.d;
   const sec=(title,pts,hint,body)=>`<div class="card"><h3>${title}<span class="pt">${pts}점</span></h3>${hint?`<div class="hint">${hint}</div>`:''}${body}</div>`;
-  const opt3=(key,labels,vals,blue)=>`<div class="opts c3">${labels.map((l,i)=>`<button class="opt ${d[key]===vals[i]?'on':''} ${blue?'bl':''}" onclick="setF('${key}',${JSON.stringify(vals[i])})">${l}</button>`).join('')}</div>`;
+  const opt3=(key,labels,vals,blue)=>`<div class="opts c3">${labels.map((l,i)=>`<button class="opt ${d[key]===vals[i]?'on':''} ${blue?'bl':''}" onclick="setF('${key}',${typeof vals[i]==='string'?`'${vals[i]}'`:vals[i]})">${l}</button>`).join('')}</div>`;
   const pgrid=(key,team)=>`<div class="pgrid">${team.players.map(p=>`<button class="pcard ${d[key]===p.n?'on':''}" onclick="setF('${key}','${p.n.replace(/'/g,"\\'")}')">
       <div class="nm">${p.n}<em>${p.pos}</em></div><div class="st">${p.club} · ${p.g}골 · <span class="pr">득점확률 ${p.p}%</span></div></button>`).join('')}
     <button class="pcard none ${d[key]==='없음'?'on':''}" onclick="setF('${key}','없음')"><div class="nm" style="justify-content:center">없음 (${team.name} 무득점)</div></button></div>`;
