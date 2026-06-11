@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>SKT 35기 월드컵응원단</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- 폰트 A/B 비교용(둘 다 로드): 결정 후 한쪽만 남길 예정 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT/fonts/static/woff2/SUIT.css">
 <style>
 :root{
   --bg:#0b0f1a; --card:#151b2b; --card2:#1d2538; --line:#2a3450;
@@ -48,16 +51,22 @@ header .sub{color:var(--sub);font-size:12px;margin-top:4px}
 .tabs{display:flex;gap:6px;margin:14px 0 8px;overflow-x:auto}
 .tab{flex:1;min-width:80px;padding:var(--sp-3) var(--sp-2);border-radius:14px;background:var(--card);border:1px solid var(--line);font-size:13px;font-weight:700;color:var(--sub);text-align:center;white-space:nowrap}
 .tab.on{background:linear-gradient(135deg,#21305c,#1a2440);color:var(--txt);border-color:var(--blue)}
-.tab.cur{flex:1.55;font-weight:800;color:var(--txt)}
 .tab.soon{opacity:.5}
+.subtabs{display:flex;gap:6px;margin-bottom:12px}
+.subtab{flex:1;padding:9px 8px;border-radius:10px;background:var(--card2);border:1px solid var(--line);font-size:12px;font-weight:700;color:var(--sub)}
+.subtab.on{background:var(--sel);border-color:var(--selbd);color:var(--txt)}
 .tab .d{display:block;font-size:10px;font-weight:500;margin-top:2px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:var(--sp-5);margin-bottom:var(--sp-4)}
-.card h3{font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.card h3{font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:12px}
 .pt{margin-left:auto;font-size:11px;font-weight:800;color:var(--gold);background:var(--sel);padding:3px 8px;border-radius:99px}
-.hint{font-size:11px;color:var(--sub);margin:-6px 0 10px;line-height:1.5}
+.hint{font-size:12px;color:var(--sub);margin:-8px 0 12px;line-height:1.5}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{display:flex;align-items:center;gap:6px;background:var(--pill);border:1px solid var(--line);border-radius:99px;padding:var(--sp-2) var(--sp-4);font-size:13px;font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--pill);border:1px solid var(--line);border-radius:10px;padding:var(--sp-2) var(--sp-4);font-size:13px;font-weight:600}
 .chip.done{border-color:var(--green)}
+.chip .ck{font-size:10px;color:var(--green);font-weight:800;margin-left:3px}
+.pgroup+.pgroup{margin-top:14px}
+.glabel{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.glabel .gn{color:var(--txt)}
 .addrow{display:flex;gap:8px;margin-top:10px}
 .addrow input{flex:1;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--txt);font-size:14px}
 .btn{border-radius:12px;padding:11px 16px;font-size:14px;font-weight:700;transition:.15s}
@@ -244,7 +253,7 @@ function demoClient(){
   }
   return {from:table};
 }
-let DEMOSEL={role:'admin',state:'locked'};
+let DEMOSEL={role:'admin',state:'locked',font:'pretendard'};
 function demoRole(r){
   DEMOSEL.role=r;
   if(r==='none'){USER=null;ADMIN=false;}
@@ -273,15 +282,22 @@ async function demoEmpty(){
   await fetchAll();render();
 }
 function demoErr(){err('(데모) 서버 연결 실패 표시 예시 — 5초 후 사라짐');setTimeout(errClear,5000);}
+const FONT_STACKS={
+  pretendard:"'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif",
+  suit:"'SUIT',-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif"
+};
+function demoFont(f){DEMOSEL.font=f;document.body.style.fontFamily=FONT_STACKS[f];demoBar();}
 function demoBar(){
   let bar=document.querySelector('#demobar');
   if(!bar){bar=document.createElement('div');bar.id='demobar';bar.className='demobar';document.body.appendChild(bar);document.body.style.paddingBottom='150px';}
   const rb=(v,l)=>`<button class="${DEMOSEL.role===v?'on':''}" onclick="demoRole('${v}')">${l}</button>`;
   const sbn=(v,l)=>`<button class="${DEMOSEL.state===v?'on':''}" onclick="demoState('${v}')">${l}</button>`;
+  const fb=(v,l)=>`<button class="${DEMOSEL.font===v?'on':''}" onclick="demoFont('${v}')">${l}</button>`;
   bar.innerHTML=`
     <div class="dl"><span class="dt">DEMO</span><span style="font-size:10px;color:var(--sub)">디자인 검토 모드 · 실제 데이터에 영향 없음</span></div>
     <div class="dl"><span class="dt">역할</span>${rb('none','비로그인')}${rb('user','참여자')}${rb('admin','어드민')}</div>
     <div class="dl"><span class="dt">상태</span>${sbn('pred0','예측 0명')}${sbn('pred3','제출 3/8')}${sbn('locked','마감')}${sbn('live1','전반 LIVE')}${sbn('live2','후반 LIVE')}${sbn('fin','종료 2:1')}${sbn('fin0','종료 0:0')}</div>
+    <div class="dl"><span class="dt">폰트</span>${fb('pretendard','Pretendard')}${fb('suit','SUIT')}</div>
     <div class="dl"><span class="dt">모달</span>
       <button onclick="empLoginDlg(null)">로그인</button>
       <button onclick="openForm('m1','u1')">예측폼</button>
@@ -298,7 +314,7 @@ function demoBar(){
 /* ================= STATE ================= */
 const sb = DEMO_MODE ? demoClient() : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 function blankLive(){return {on:false,goals:[],cards:0,half:null,finished:false,mvp:null};}
-let S = {participants:[],pin:null,tab:'m1',matches:{m1:{preds:{},locked:false,live:blankLive()},m2:{preds:{},locked:false,live:blankLive()},m3:{preds:{},locked:false,live:blankLive()}}};
+let S = {participants:[],pin:null,tab:'m1',rankTab:'this',matches:{m1:{preds:{},locked:false,live:blankLive()},m2:{preds:{},locked:false,live:blankLive()},m3:{preds:{},locked:false,live:blankLive()}}};
 let LOADED=false, MODAL_OPEN=false, BUSY=false;
 let USER=sessionStorage.getItem('wc_user')||null;
 let ADMIN=sessionStorage.getItem('wc_admin')==='1';
@@ -412,7 +428,7 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','
 function render(){
   if(!LOADED)return;
   renderTop(); renderTabs();
-  if(S.tab==='total')renderTotal(); else renderMatch(S.tab);
+  renderMatch(S.tab);
 }
 function renderTop(){
   const p=USER?S.participants.find(x=>x.id===USER):null;
@@ -426,13 +442,12 @@ function curMatchIdx(){const i=MATCHES.findIndex(m=>!S.matches[m.id].live.finish
 function isSoon(m,j){const M=S.matches[m.id];return j>curMatchIdx()&&!M.locked&&!M.live.on&&!M.live.finished;}
 function dday(m){if(!m.kickoff)return 0;return Math.ceil((new Date(m.kickoff)-new Date())/86400000);}
 function renderTabs(){
-  const cur=curMatchIdx();
   $('#tabs').innerHTML = MATCHES.map((m,j)=>{
     const M=S.matches[m.id], soon=isSoon(m,j);
     const st=M.live.finished?'종료':M.live.on?'🔴 LIVE':M.locked?'마감':(soon?'🔒 '+m.date.split(' ')[0]:m.date);
-    const cls=`tab ${S.tab===m.id?'on':''} ${j===cur?'cur':''} ${soon?'soon':''}`;
+    const cls=`tab ${S.tab===m.id?'on':''} ${soon?'soon':''}`;
     return `<button class="${cls}" onclick="S.tab='${m.id}';render()">${m.label} ${TEAMS[m.opp].flag}<span class="d">${st}</span></button>`;
-  }).join('')+`<button class="tab ${S.tab==='total'?'on':''}" onclick="S.tab='total';render()">🏆 종합<span class="d">순위</span></button>`;
+  }).join('');
 }
 function avatarOf(pid){
   const p=S.participants.find(x=>x.id===pid);
@@ -478,12 +493,17 @@ function renderMatch(mid){
   </div>
   <div class="minfo">${m.label} · ${m.date} · ${m.venue} ${L.finished?'· <b style="color:var(--green)">경기 종료</b>':L.on?'· <b style="color:var(--red)">🔴 LIVE</b>':''}</div>`;
 
-  html+=`<div class="card"><h3>👥 참여자 <span class="pt">${S.participants.length}명</span></h3>
-    <div class="chips">${S.participants.map(p=>{
-      const done=!!M.preds[p.id];
-      return `<span class="chip ${done?'done':''}">${avatarOf(p.id)} ${esc(p.name)} ${done?'✅':''}</span>`;
-    }).join('')||'<span class="hint">아직 없음 — 어드민이 ⚙️에서 직원을 등록하세요</span>'}</div>
-  </div>`;
+  html+=`<div class="card"><h3>👥 참여자 <span class="pt">${S.participants.length}명</span></h3>`;
+  if(!S.participants.length){
+    html+=`<span class="hint">아직 없음 — 어드민이 ⚙️에서 직원을 등록하세요</span>`;
+  }else{
+    const doneList=S.participants.filter(p=>M.preds[p.id]);
+    const waitList=S.participants.filter(p=>!M.preds[p.id]);
+    const chip=(p,done)=>`<span class="chip ${done?'done':''}">${avatarOf(p.id)} ${esc(p.name)}${done?'<span class="ck">✓</span>':''}</span>`;
+    if(doneList.length)html+=`<div class="pgroup"><div class="glabel">✅ 제출 완료 <span class="gn">${doneList.length}명</span></div><div class="chips">${doneList.map(p=>chip(p,true)).join('')}</div></div>`;
+    if(waitList.length)html+=`<div class="pgroup"><div class="glabel">⏳ 미제출 <span class="gn">${waitList.length}명</span></div><div class="chips">${waitList.map(p=>chip(p,false)).join('')}</div></div>`;
+  }
+  html+=`</div>`;
 
   if(!M.locked){
     html+=`<div class="card"><h3>📝 예측 입력 <span class="pt">최대 300점</span></h3>
@@ -502,12 +522,12 @@ function renderMatch(mid){
     else if(L.on||ADMIN) html+=liveCard(mid,m,O,M);
     html+=rulesCard();
   }else{
+    html+=rankingsCard(mid);
     if(!L.finished){
       html+=liveCard(mid,m,O,M);
     }else{
       html+=resultCard(mid,m,O,M);
     }
-    html+=leaderboardCard(mid,M,'이 경기 순위',true);
     html+=boardCard(mid,m,O,M);
   }
   $('#app').innerHTML=html;
@@ -521,8 +541,12 @@ function liveCard(mid,m,O,M){
   const L=M.live;
   let html=`<div class="card"><h3>🔴 라이브 채점 <span class="pt">어드민이 입력</span></h3>`;
   if(!L.on){
-    html+=`<div class="hint">킥오프하면 어드민이 시작하세요. 골·카드를 입력할 때마다 모두의 화면에서 순위가 실시간으로 바뀝니다.</div>
-    <button class="btn p w" onclick="startLive('${mid}')">▶ 라이브 시작 (킥오프!)</button></div>`;
+    if(ADMIN){
+      html+=`<div class="hint">킥오프하면 어드민이 시작하세요. 골·카드를 입력할 때마다 모두의 화면에서 순위가 실시간으로 바뀝니다.</div>
+      <button class="btn p w" onclick="startLive('${mid}')">▶ 라이브 시작 (킥오프!)</button></div>`;
+    }else{
+      html+=`<div class="hint">킥오프 후 어드민이 라이브를 시작하면 골·카드가 실시간으로 점수에 반영됩니다. 화면은 5초마다 자동 갱신돼요.</div></div>`;
+    }
     return html;
   }
   if(ADMIN){
@@ -550,19 +574,51 @@ function resultCard(mid,m,O,M){
   <div class="evlog">${L.goals.map(g=>`⚽ ${g.min}' ${g.team==='kr'?'🇰🇷':O.flag} ${esc(g.scorer)}`).join('<br>')||'득점 없음'}<br>🟨 카드 ${L.cards}장 · MVP: ${esc(L.mvp||'-')}</div>
   <button class="btn g w" onclick="copyResult('${mid}')">📋 결과 복사 (카톡 공유용)</button></div>`;
 }
-function leaderboardCard(mid,M,title,anim){
+// 이 경기 순위 행들 (라이브 점수 반영 · FLIP 애니용 #lb)
+function matchRows(M,anim){
   const sc=matchScores(M);
   const rows=Object.keys(sc).map(pid=>({pid,...sc[pid]})).sort((a,b)=>b.total-a.total);
-  if(!rows.length)return '';
-  return `<div class="card"><h3>📊 ${title}</h3><div class="lb" ${anim?'id="lb"':''}>${rows.map((r,i)=>`
+  if(!rows.length)return '<div class="hint" style="margin:0">아직 순위가 없습니다</div>';
+  return `<div class="lb" ${anim?'id="lb"':''}>${rows.map((r,i)=>`
     <div class="lbrow ${i===0&&r.total>0?'first':''}" data-pid="${r.pid}" onclick="this.classList.toggle('open')" style="flex-wrap:wrap">
       <span class="rk">${i===0&&r.total>0?'👑':i+1}</span>
       <span class="nm">${avatarOf(r.pid)} ${esc(pname(r.pid))}${r.pid===USER?' <span class="tag">나</span>':''}</span>
       ${r.pending>0?`<span class="pend">+${r.pending}점 가능</span>`:''}
       <span class="pts">${r.total}점</span>
       <div class="breakdown">${r.items.map(it=>`<div class="bd-it ${it.state}"><span>${it.label}</span><span>${it.state==='pend'?'⏳ 대기':it.pts+'/'+it.max}</span></div>`).join('')}</div>
-    </div>`).join('')}</div>
-    <div class="hint" style="margin-top:6px">행을 누르면 항목별 점수가 보입니다</div></div>`;
+    </div>`).join('')}</div>`;
+}
+// 종합(3경기 합산) 순위 행들
+function totalRows(){
+  const totals={};
+  S.participants.forEach(p=>totals[p.id]={t:0,per:[]});
+  MATCHES.forEach(m=>{
+    const sc=matchScores(S.matches[m.id]);
+    S.participants.forEach(p=>{const v=sc[p.id]?sc[p.id].total:null;totals[p.id].per.push(v);totals[p.id].t+=v||0;});
+  });
+  const rows=S.participants.map(p=>({p,...totals[p.id]})).sort((a,b)=>b.t-a.t);
+  if(!rows.length)return '<div class="hint" style="margin:0">참여자가 없습니다</div>';
+  return `<div class="lb">${rows.map((r,i)=>{
+    const last=rows.length>=3&&i===rows.length-1&&r.t>0;
+    return `<div class="lbrow ${i===0&&r.t>0?'first':''}" style="flex-wrap:wrap">
+      <span class="rk">${i===0&&r.t>0?'👑':i+1}</span>
+      <span class="nm">${avatarOf(r.p.id)} ${esc(r.p.name)} ${last?'<span class="tag">🍗 치킨 당번 후보</span>':''}</span>
+      <span class="pts">${r.t}점</span>
+      <span class="det" style="width:100%">${r.per.map((v,j)=>`${j+1}차 ${v===null?'-':v}`).join(' · ')}</span>
+    </div>`;
+  }).join('')}</div>`;
+}
+// 순위 카드 — 내부 탭(이 경기 | 종합)
+function rankingsCard(mid){
+  const M=S.matches[mid];
+  const t=S.rankTab||'this';
+  const stab=(v,l)=>`<button class="subtab ${t===v?'on':''}" onclick="S.rankTab='${v}';render()">${l}</button>`;
+  const body=t==='total'?totalRows():matchRows(M,true);
+  const foot=t==='total'?'3경기 합산 · 최대 900점 · 행을 누르면 경기별 점수':'이 경기 점수 · 행을 누르면 항목별 점수';
+  return `<div class="card"><h3>📊 순위</h3>
+    <div class="subtabs">${stab('this','이 경기')}${stab('total','종합')}</div>
+    ${body}
+    <div class="hint" style="margin:8px 0 0">${foot}</div></div>`;
 }
 function boardCard(mid,m,O,M){
   const f=getFacts(M);
@@ -581,8 +637,8 @@ function boardCard(mid,m,O,M){
   const oname=O.name;
   const resTxt=v=>v===1?'🇰🇷 승':v===0?'무':oname+' 승';
   const ftTxt=v=>v==='kr'?'🇰🇷':v==='opp'?O.flag+oname:'무득점';
-  let html=`<div class="card"><h3>👀 예측 비교 보드</h3>
-  <div class="hint">${'outcome'in f?'초록 = 적중, 흐림 = 탈락':'빨간 테두리 = 나 혼자만 고른 예측 🦄'}</div>`;
+  let html=`<div class="card"><h3>👀 ${m.label} 예측 비교</h3>
+  <div class="hint">${'outcome'in f?'이 경기 예측 · 초록 = 적중, 흐림 = 탈락':'이 경기 예측 · 빨간 테두리 = 나 혼자만 고른 예측 🦄'}</div>`;
   html+=row('경기 결과',p=>resTxt(p.result),'outcome'in f?resTxt(f.outcome):undefined);
   html+=row('최종 스코어',p=>p.kr+':'+p.opp,'outcome'in f?f.kr+':'+f.opp:undefined);
   html+=row('🇰🇷 첫 득점자',p=>p.krFirst,f.krFirst);
@@ -596,38 +652,6 @@ function boardCard(mid,m,O,M){
   if(cm.length)html+=`<div class="brow"><div class="bl">한 줄 코멘트</div>${cm.map(pid=>`<div style="font-size:12px;padding:2px 0">${avatarOf(pid)} <b>${esc(pname(pid))}</b> : ${esc(M.preds[pid].comment)}</div>`).join('')}</div>`;
   return html+'</div>';
 }
-function renderTotal(){
-  const totals={};
-  S.participants.forEach(p=>totals[p.id]={t:0,per:[]});
-  MATCHES.forEach(m=>{
-    const sc=matchScores(S.matches[m.id]);
-    S.participants.forEach(p=>{
-      const v=sc[p.id]?sc[p.id].total:null;
-      totals[p.id].per.push(v);
-      totals[p.id].t+=v||0;
-    });
-  });
-  const rows=S.participants.map(p=>({p,...totals[p.id]})).sort((a,b)=>b.t-a.t);
-  let html='';
-  MATCHES.forEach(m=>{
-    const M=S.matches[m.id];
-    if(M.locked||M.live.on||M.live.finished) html+=leaderboardCard(m.id,M,`${m.label} ${TEAMS[m.opp].flag} 순위`);
-  });
-  html+=`<div class="card"><h3>🏆 종합 순위 <span class="pt">3경기 합산 · 최대 900점</span></h3>`;
-  if(!rows.length)html+='<div class="hint">참여자가 없습니다</div>';
-  html+=rows.map((r,i)=>{
-    const last=rows.length>=3&&i===rows.length-1&&r.t>0;
-    return `<div class="lbrow ${i===0&&r.t>0?'first':''}">
-      <span class="rk">${i===0&&r.t>0?'👑':i+1}</span>
-      <span class="nm">${avatarOf(r.p.id)} ${esc(r.p.name)} ${last?'<span class="tag">🍗 치킨 당번 후보</span>':''}</span>
-      <span class="det" style="width:auto;flex:none">${r.per.map((v,j)=>`${j+1}차 ${v===null?'-':v}`).join(' · ')}</span>
-      <span class="pts">${r.t}점</span>
-    </div>`;
-  }).join('');
-  html+=`</div>${rulesCard()}`;
-  $('#app').innerHTML=html;
-}
-
 /* ================= ADMIN ================= */
 let pendingAdmin=null;
 function adminGate(fn){
