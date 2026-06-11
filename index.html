@@ -47,6 +47,8 @@ header .sub{color:var(--sub);font-size:12px;margin-top:4px}
 .tabs{display:flex;gap:6px;margin:14px 0 8px;overflow-x:auto}
 .tab{flex:1;min-width:80px;padding:13px 9px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-size:13px;font-weight:700;color:var(--sub);text-align:center;white-space:nowrap}
 .tab.on{background:linear-gradient(135deg,#21305c,#1a2440);color:var(--txt);border-color:var(--blue)}
+.tab.cur{flex:1.55;font-weight:800;color:var(--txt)}
+.tab.soon{opacity:.5}
 .tab .d{display:block;font-size:10px;font-weight:500;margin-top:2px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:14px}
 .card h3{font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:10px}
@@ -196,9 +198,9 @@ const TEAMS = {
     {n:'T. 마세코',pos:'FW',club:'AEL 리마솔',g:2,p:4}]}
 };
 const MATCHES = [
-  {id:'m1',opp:'cz',label:'1차전',date:'6/12 (금) 11:00',venue:'과달라하라'},
-  {id:'m2',opp:'mx',label:'2차전',date:'6/18 (목) 10:00',venue:'과달라하라'},
-  {id:'m3',opp:'za',label:'3차전',date:'6/25 (목) 10:00',venue:'몬테레이'}
+  {id:'m1',opp:'cz',label:'1차전',date:'6/12 (금) 11:00',venue:'과달라하라',kickoff:'2026-06-12T11:00'},
+  {id:'m2',opp:'mx',label:'2차전',date:'6/18 (목) 10:00',venue:'과달라하라',kickoff:'2026-06-18T10:00'},
+  {id:'m3',opp:'za',label:'3차전',date:'6/25 (목) 10:00',venue:'몬테레이',kickoff:'2026-06-25T10:00'}
 ];
 const BANDS=['0~15분','16~30분','31~45분+','46~60분','61~75분','76~90분+'];
 const CARDS=['0~2장','3~5장','6장 이상'];
@@ -419,11 +421,16 @@ function renderTop(){
     : `<button class="toplink hot" onclick="empLoginDlg(null)">로그인</button><span class="topsep">|</span><button class="toplink" onclick="adminPanel()">⚙️ 어드민${ADMIN?' ✓':''}</button>`;
 }
 function logoutUser(){USER=null;sessionStorage.removeItem('wc_user');render();toast('로그아웃 되었습니다');}
+function curMatchIdx(){const i=MATCHES.findIndex(m=>!S.matches[m.id].live.finished);return i===-1?MATCHES.length-1:i;}
+function isSoon(m,j){const M=S.matches[m.id];return j>curMatchIdx()&&!M.locked&&!M.live.on&&!M.live.finished;}
+function dday(m){if(!m.kickoff)return 0;return Math.ceil((new Date(m.kickoff)-new Date())/86400000);}
 function renderTabs(){
-  $('#tabs').innerHTML = MATCHES.map(m=>{
-    const M=S.matches[m.id];
-    const st=M.live.finished?'종료':M.live.on?'🔴 LIVE':M.locked?'마감':m.date;
-    return `<button class="tab ${S.tab===m.id?'on':''}" onclick="S.tab='${m.id}';render()">${m.label} ${TEAMS[m.opp].flag}<span class="d">${st}</span></button>`;
+  const cur=curMatchIdx();
+  $('#tabs').innerHTML = MATCHES.map((m,j)=>{
+    const M=S.matches[m.id], soon=isSoon(m,j);
+    const st=M.live.finished?'종료':M.live.on?'🔴 LIVE':M.locked?'마감':(soon?'🔒 '+m.date.split(' ')[0]:m.date);
+    const cls=`tab ${S.tab===m.id?'on':''} ${j===cur?'cur':''} ${soon?'soon':''}`;
+    return `<button class="${cls}" onclick="S.tab='${m.id}';render()">${m.label} ${TEAMS[m.opp].flag}<span class="d">${st}</span></button>`;
   }).join('')+`<button class="tab ${S.tab==='total'?'on':''}" onclick="S.tab='total';render()">🏆 종합<span class="d">순위</span></button>`;
 }
 function avatarOf(pid){
@@ -440,8 +447,27 @@ function emojiSelect(id,current){
 }
 function pname(pid){const p=S.participants.find(p=>p.id===pid);return p?p.name:'?';}
 
+function comingSoonView(m,O){
+  const d=dday(m);
+  return `
+  <div class="mhead">
+    <div class="t"><span class="f">🇰🇷</span>대한민국</div>
+    <div><div class="vs">VS</div></div>
+    <div class="t"><span class="f">${O.flag}</span>${O.name}</div>
+  </div>
+  <div class="minfo">${m.label} · ${m.date} · ${m.venue}</div>
+  <div class="card" style="text-align:center;padding:40px 20px">
+    <div style="font-size:46px;line-height:1;margin-bottom:10px">🔒</div>
+    <h3 style="justify-content:center;font-size:16px">${m.label} 예측은 곧 열려요</h3>
+    <div class="hint" style="font-size:13px;text-align:center;margin:8px 0 0">이전 경기가 끝나면 열립니다 · ${m.date} 킥오프</div>
+    ${d>0?`<div style="margin-top:16px;font-size:26px;font-weight:900;color:var(--gold)">D-${d}</div>`:''}
+    <div class="hint" style="font-size:12px;text-align:center;margin-top:14px">먼저 진행 중인 경기에 집중해 주세요 🔥</div>
+  </div>`;
+}
 function renderMatch(mid){
   const m=MATCHES.find(x=>x.id===mid), M=S.matches[mid], O=TEAMS[m.opp], L=M.live;
+  const idx=MATCHES.findIndex(x=>x.id===mid);
+  if(isSoon(m,idx)){ $('#app').innerHTML=comingSoonView(m,O); return; }
   const krs=L.goals.filter(g=>g.team==='kr').length, ops=L.goals.filter(g=>g.team==='opp').length;
   let html=`
   <div class="mhead">
@@ -480,7 +506,7 @@ function renderMatch(mid){
     }else{
       html+=resultCard(mid,m,O,M);
     }
-    html+=leaderboardCard(mid,M,'이 경기 순위');
+    html+=leaderboardCard(mid,M,'이 경기 순위',true);
     html+=boardCard(mid,m,O,M);
   }
   $('#app').innerHTML=html;
@@ -523,11 +549,11 @@ function resultCard(mid,m,O,M){
   <div class="evlog">${L.goals.map(g=>`⚽ ${g.min}' ${g.team==='kr'?'🇰🇷':O.flag} ${esc(g.scorer)}`).join('<br>')||'득점 없음'}<br>🟨 카드 ${L.cards}장 · MVP: ${esc(L.mvp||'-')}</div>
   <button class="btn g w" onclick="copyResult('${mid}')">📋 결과 복사 (카톡 공유용)</button></div>`;
 }
-function leaderboardCard(mid,M,title){
+function leaderboardCard(mid,M,title,anim){
   const sc=matchScores(M);
   const rows=Object.keys(sc).map(pid=>({pid,...sc[pid]})).sort((a,b)=>b.total-a.total);
   if(!rows.length)return '';
-  return `<div class="card"><h3>📊 ${title}</h3><div class="lb" id="lb">${rows.map((r,i)=>`
+  return `<div class="card"><h3>📊 ${title}</h3><div class="lb" ${anim?'id="lb"':''}>${rows.map((r,i)=>`
     <div class="lbrow ${i===0&&r.total>0?'first':''}" data-pid="${r.pid}" onclick="this.classList.toggle('open')" style="flex-wrap:wrap">
       <span class="rk">${i===0&&r.total>0?'👑':i+1}</span>
       <span class="nm">${avatarOf(r.pid)} ${esc(pname(r.pid))}${r.pid===USER?' <span class="tag">나</span>':''}</span>
@@ -581,7 +607,12 @@ function renderTotal(){
     });
   });
   const rows=S.participants.map(p=>({p,...totals[p.id]})).sort((a,b)=>b.t-a.t);
-  let html=`<div class="card"><h3>🏆 종합 순위 <span class="pt">3경기 합산 · 최대 900점</span></h3>`;
+  let html='';
+  MATCHES.forEach(m=>{
+    const M=S.matches[m.id];
+    if(M.locked||M.live.on||M.live.finished) html+=leaderboardCard(m.id,M,`${m.label} ${TEAMS[m.opp].flag} 순위`);
+  });
+  html+=`<div class="card"><h3>🏆 종합 순위 <span class="pt">3경기 합산 · 최대 900점</span></h3>`;
   if(!rows.length)html+='<div class="hint">참여자가 없습니다</div>';
   html+=rows.map((r,i)=>{
     const last=rows.length>=3&&i===rows.length-1&&r.t>0;
