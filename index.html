@@ -147,7 +147,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .lb{position:relative}
 .lbrow{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:var(--sp-3) var(--sp-4);margin-bottom:8px;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
 .lbrow .rk{font-size:16px;font-weight:900;width:28px;text-align:center}
-.lbrow .nm{font-weight:700;font-size:14px;flex:1}
+.lbrow .nm{font-weight:700;font-size:14px;flex:1;min-width:0}
 .lbrow .pts{font-size:18px;font-weight:900;color:var(--gold)}
 .lbrow .pend{font-size:10px;color:var(--sub)}
 .lbrow.first{border-color:var(--selbd);background:linear-gradient(135deg,var(--sel),var(--card2))}
@@ -179,7 +179,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 @keyframes efpop{from{opacity:0}to{opacity:1}}
 @keyframes effade{to{opacity:0;transform:scale(1.06)}}
 @keyframes efkick{0%{transform:scale(.4) rotate(-8deg)}60%{transform:scale(1.18) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
-#modal{position:fixed;inset:0;background:rgba(5,8,15,.85);z-index:50;display:none;overflow-y:auto;padding:16px 12px 80px}
+#modal{position:fixed;inset:0;background:rgba(5,8,15,.85);z-index:50;display:none;overflow-y:auto;overflow-x:hidden;padding:16px 12px 80px}
 #modal.show{display:block}
 /* 시트 모드(예측폼): 딤 대신 배경색을 본문과 동일하게 — 풀스크린처럼 보이게 */
 #modal.sheet{background:var(--bg);padding:0 12px calc(80px + env(safe-area-inset-bottom))}
@@ -839,15 +839,15 @@ function adminPanel(){
   showModal(`<div class="mbar"><button class="btn g" onclick="closeModal();render()">✕</button><h2>⚙️ 어드민 관리</h2></div>
   <div class="card"><h3>👥 직원 등록 <span class="pt">${S.participants.length}명</span></h3>
     <div class="hint">이름·사번·전화번호를 등록하세요. 세 가지가 모두 일치해야 로그인할 수 있습니다.</div>
-    ${S.participants.map(p=>`<div class="lbrow"><span class="nm">${avatarOf(p.id)} ${esc(p.name)}</span><div class="taggrp"><span class="tag"><b class="tk">사번</b> ${esc(p.emp)}</span><span class="tag"><b class="tk">전화</b> ${esc(p.phone)}</span></div><button class="btn g" style="padding:6px 10px;font-size:12px" onclick="editPart('${p.id}')">수정</button><button class="btn g" style="padding:6px 10px;font-size:12px" onclick="delPart('${p.id}')">삭제</button></div>`).join('')}
+    ${S.participants.map(p=>`<div class="lbrow" style="flex-wrap:wrap;gap:8px"><span class="nm" style="flex:1 1 100%">${avatarOf(p.id)} ${esc(p.name)}</span><div class="taggrp" style="flex:1"><span class="tag"><b class="tk">사번</b> ${esc(p.emp)}</span><span class="tag"><b class="tk">전화</b> ${esc(p.phone)}</span></div><button class="btn g" style="padding:6px 10px;font-size:12px;flex:0 0 auto" onclick="editPart('${p.id}')">수정</button><button class="btn g" style="padding:6px 10px;font-size:12px;flex:0 0 auto" onclick="delPart('${p.id}')">삭제</button></div>`).join('')}
     <div class="addrow" style="flex-wrap:wrap">
       <input id="adm_name" placeholder="이름" maxlength="8" style="flex:1;min-width:90px">
       <input id="adm_emp" placeholder="사번" maxlength="12" style="flex:1;min-width:90px">
     </div>
-    <div class="addrow">
-      <input id="adm_phone" placeholder="전화번호 (예: 01012345678)" maxlength="13" inputmode="numeric" onkeydown="if(event.key==='Enter')addPart()">
+    <div class="addrow" style="flex-wrap:wrap">
+      <input id="adm_phone" placeholder="전화번호 (예: 01012345678)" maxlength="13" inputmode="numeric" style="min-width:150px" onkeydown="if(event.key==='Enter')addPart()">
       ${emojiSelect('adm_emoji',null)}
-      <button class="btn b" onclick="addPart()">등록</button>
+      <button class="btn b" style="flex:0 0 auto" onclick="addPart()">등록</button>
     </div>
   </div>
   ${adminPredsCard()}
