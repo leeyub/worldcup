@@ -1103,12 +1103,18 @@ function mvpDlg(mid){
     <div class="hint">MVP가 발표되면 선택하세요. 등록하는 순간 MVP 항목이 채점됩니다.</div>
     <select class="sel" id="f_mvp">${all.map(n=>{const v=n.split(' ').slice(1).join(' ');return `<option value="${v}" ${cur===v?'selected':''}>${n}</option>`;}).join('')}</select>
     <button class="btn p w" onclick="confirmMvp('${mid}')">MVP 등록 🏅</button>
+    ${cur?`<button class="btn g w" onclick="clearMvp('${mid}')">아직 미정으로 되돌리기 (대기 ⏳)</button>`:''}
     <button class="btn g w" onclick="closeModal()">취소</button></div>`);
 }
 function confirmMvp(mid){
   const mvp=$('#f_mvp').value;closeModal();
   toast('🏅 MVP 등록: '+mvp);
   withDiff(mid,()=>{S.matches[mid].live.mvp=mvp;});
+}
+function clearMvp(mid){
+  closeModal();
+  toast('🏅 MVP 대기 상태로 되돌렸어요');
+  withDiff(mid,()=>{S.matches[mid].live.mvp=null;});   // 발표 전까지 MVP 항목 ⏳ 대기
 }
 
 /* ================= 예측 폼 ================= */
