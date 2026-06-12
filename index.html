@@ -175,6 +175,25 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .betrow.free{border-color:var(--green);background:rgba(52,211,153,.10)}
 .betrow.free .bamt{color:var(--green)}
 .betrow.most .bamt{color:var(--red)}
+/* 개인 리포트 */
+.reprow{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card2);cursor:pointer;transition:.12s}
+.reprow:last-of-type{margin-bottom:0}
+.reprow:active{transform:scale(.99)}
+.reprow .brk{font-size:15px;font-weight:900;width:24px;text-align:center}
+.reprow .repnm{flex:1;font-weight:700;font-size:14px;min-width:0}
+.reprow .repclubadge{display:block;font-size:11px;font-weight:700;color:var(--gold);margin-top:2px}
+.reprow .reppt{font-weight:900;font-size:14px;color:var(--gold);white-space:nowrap}
+.reprow .repchev{color:var(--sub);font-size:18px;font-weight:700}
+.repclu{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:var(--sel);border:1px solid var(--selbd);margin-bottom:14px}
+.repclu .ic{font-size:42px;line-height:1}
+.repclu .cn{font-size:18px;font-weight:900}
+.repclu .cd{font-size:12px;color:var(--sub);margin-top:3px;line-height:1.45}
+.repstat{display:flex;justify-content:space-between;font-size:14px;font-weight:800;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.repcard h3{margin-top:16px}
+.repmiss{border-left:3px solid var(--red);padding:5px 0 5px 10px;margin-bottom:8px}
+.repmiss .rmlbl{font-size:13px;font-weight:700}
+.repmiss .rmpt{color:var(--red);font-size:11px;font-weight:800}
+.repmiss .rmvs{font-size:12px;color:var(--sub);margin-top:2px}
 .evlog{font-size:12px;color:var(--sub);line-height:1.9}
 #toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
 .toast{background:linear-gradient(135deg,rgba(37,99,235,.88),rgba(59,130,246,.80));color:#eff6ff;border:1px solid rgba(147,197,253,.45);padding:8px 16px;border-radius:99px;font-size:13px;font-weight:800;backdrop-filter:blur(8px) saturate(1.3);-webkit-backdrop-filter:blur(8px) saturate(1.3);box-shadow:0 6px 20px rgba(0,0,0,.18);animation:tin .3s, tout .4s 2.6s forwards}
@@ -642,6 +661,7 @@ function renderMatch(mid){
       html+=rankingsCard(mid);
     }
     html+=betCard();
+    html+=reportCard(mid);
     html+=boardCard(mid,m,O,M);
     html+=commentsCard(mid,M);
     html+=rulesCard();   // 마감(진행 중·종료) 후에도 항목별 배점을 친구들이 조회 가능
@@ -764,6 +784,83 @@ function betCard(){
     <div class="hint">${allDone?'🏁 최종 결과! 1등은 공짜 😎':'현재 순위 기준 — 경기 끝날 때마다 갱신돼요'}</div>
     ${li}
     <div class="hint" style="margin:12px 0 0;line-height:1.6">💡 분배 방식: 등수 가중치(1등 0 · 2등 1 · 3등 2 ⋯ 꼴등 ${rows.length-1})에 비례해 총 ${won(BILL_TOTAL)}원을 나눠요. 한 등수 내려갈 때마다 일정액씩 더, 동점은 같은 금액.</div></div>`;
+}
+/* ---------- 개인 경기 리포트 (예측 vs 결과) ---------- */
+function reportData(pid,mid){
+  const M=S.matches[mid],m=MATCHES.find(x=>x.id===mid),O=TEAMS[m.opp];
+  const p=M.preds[pid]; if(!p)return null;
+  const f=getFacts(M), items=scorePred(p,f);
+  const total=items.reduce((s,it)=>s+it.pts,0);
+  const res=v=>v===1?'🇰🇷 승':v===0?'무':O.name+' 승';
+  const ft=v=>v==='kr'?'🇰🇷':v==='opp'?O.flag+' '+O.name:'무득점';
+  const VA={'경기 결과':[res(p.result),res(f.outcome)],'최종 스코어':[p.kr+':'+p.opp,f.kr+':'+f.opp],
+    '🇰🇷 첫 득점자':[p.krFirst,f.krFirst],'상대 첫 득점자':[p.oppFirst,f.oppFirst],
+    '첫 골 팀':[ft(p.firstTeam),ft(f.firstTeam)],'첫 골 시간대':[bandTxt(p.band),bandTxt(f.firstBand)],
+    '전반전 결과':[res(p.half),res(f.half)],'카드 수':[CARDS[p.cards],CARDS[f.cards]],'MVP':[p.mvp,f.mvp]};
+  const rich=items.map(it=>({...it,yours:(VA[it.label]||['-','-'])[0],actual:(VA[it.label]||['-','-'])[1]}));
+  return {p,f,O,items:rich,total};
+}
+function clusterOf(d){
+  const {p,f,total}=d, pct=total/300;
+  const exact=p.kr===f.kr&&p.opp===f.opp, resHit=p.result===f.outcome;
+  const krHit=p.krFirst===f.krFirst, opHit=p.oppFirst===f.oppFirst, scorers=(krHit?1:0)+(opHit?1:0);
+  const mvpHit=p.mvp===f.mvp;
+  if(exact&&resHit&&scorers===2)return{e:'🔮',n:'전지적 예언자',d:'스코어도 득점자도 다 맞힘. 사람 맞아요?'};
+  if(exact&&resHit&&mvpHit)return{e:'🏆',n:'MVP까지 픽한 척척박사',d:'스코어에 MVP까지, 무서운 적중력.'};
+  if(scorers===2)return{e:'👀',n:'선수 분석 끝판왕',d:'양 팀 첫 득점자를 다 맞히는 변태적 디테일.'};
+  if(exact&&resHit){
+    if(total>=150)return{e:'🎯',n:'스코어 저격수',d:'스코어를 정확히 — 디테일까지 야무지게 챙김.'};
+    if(total>=135)return{e:'🧮',n:'숫자의 마술사',d:'스코어는 神인데 득점자는 영 딴사람. 그래도 고득점.'};
+    return{e:'📐',n:'결과만 보는 거시예측가',d:'스코어는 맞혔지만 누가 넣을진 관심 밖.'};
+  }
+  if(p.result===-1&&f.outcome===1)return{e:'🐸',n:'청개구리 역배러',d:'남들 반대로 갔다 장렬히… 그래도 간지는 챙김.'};
+  if(p.result===0&&f.outcome!==0)return{e:'🤝',n:'무승부 도사의 헛발질',d:'무난하게 비긴다더니 경기는 갈렸네요.'};
+  if(p.kr>=4)return{e:'🚀',n:'화력덕후 대포알',d:'한국 다득점에 올인한 낭만파.'};
+  if(resHit&&pct>=.45)return{e:'🇰🇷',n:'믿음의 애국 베터',d:'한국 믿고 갔고, 한국이 보답했다.'};
+  if(pct<=.2)return{e:'🤡',n:'헛다리의 명장',d:'열심히 찍었는데 방향이… 점심은 든든히 사세요.'};
+  if(pct<=.42)return{e:'🎲',n:'느낌적인 느낌파',d:'데이터보다 직감. 오늘은 직감이 휴가 갔네요.'};
+  return{e:'🎢',n:'들쭉날쭉 감성 베터',d:'맞을 땐 맞고 틀릴 땐 화끈하게.'};
+}
+function reportCard(mid){
+  const M=S.matches[mid]; if(!M.live.finished)return '';
+  const subs=S.participants.filter(p=>M.preds[p.id]); if(!subs.length)return '';
+  const sc=matchScores(M);
+  const order=subs.map(p=>({p,t:sc[p.id].total})).sort((a,b)=>b.t-a.t);
+  const ranks=tieRanks(order.map(o=>o.t));
+  const li=order.map((o,i)=>{
+    const cl=clusterOf(reportData(o.p.id,mid)),top=ranks[i]===1;
+    return `<div class="reprow" onclick="showReport('${mid}','${o.p.id}')">
+      <span class="brk">${top?'👑':ranks[i]}</span>
+      <span class="repnm">${avatarOf(o.p.id)} ${esc(gname(o.p.name))}<span class="repclubadge">${cl.e} ${cl.n}</span></span>
+      <span class="reppt">${o.t}점</span><span class="repchev">›</span></div>`;
+  }).join('');
+  return `<div class="card"><h3>📑 개인 리포트 <span class="pt">${MATCHES.find(x=>x.id===mid).label}</span></h3>
+    <div class="hint">각자 예측을 경기 결과와 비교한 리포트예요. 이름을 누르면 상세 분석 👀</div>${li}</div>`;
+}
+function showReport(mid,pid){
+  const M=S.matches[mid],m=MATCHES.find(x=>x.id===mid),O=TEAMS[m.opp];
+  const d=reportData(pid,mid); if(!d)return;
+  const sc=matchScores(M);
+  const order=S.participants.filter(x=>M.preds[x.id]).map(x=>({id:x.id,t:sc[x.id].total})).sort((a,b)=>b.t-a.t);
+  const ranks=tieRanks(order.map(o=>o.t)), myRank=ranks[order.findIndex(o=>o.id===pid)], N=order.length;
+  const cl=clusterOf(d), p=d.p, name=gname(S.participants.find(x=>x.id===pid).name);
+  const lbl=l=>l==='상대 첫 득점자'?O.flag+' 첫 득점자':l;
+  const hits=d.items.filter(it=>it.state==='hit').sort((a,b)=>b.pts-a.pts);
+  const misses=d.items.filter(it=>it.state==='miss').sort((a,b)=>b.max-a.max);
+  const leanTxt=p.result===1?'🇰🇷 한국 승리를 믿은 낙관파':p.result===-1?'🃏 '+O.name+' 우세를 점친 역배파':'🤝 무승부를 노린 중립파';
+  const aggrTxt=p.kr>=3?`한국 ${p.kr}골 다득점까지 지른 화끈한 베팅`:p.kr===0?'한국 무득점까지 각오한 신중파':`한국 ${p.kr}:${p.opp} 스코어 예측`;
+  const accTxt=d.total>=210?'적중률 최상위권 🔥':d.total>=120?'중상위권 적중':'이번엔 적중운이 안 따라줌 😅';
+  showModal(`<div class="mbar"><button class="btn g" onclick="closeModal()">✕</button><h2>📑 ${esc(name)}님 리포트 — ${m.label}</h2></div>
+    <div class="card repcard">
+      <div class="repclu"><span class="ic">${cl.e}</span><div><div class="cn">${cl.n}</div><div class="cd">${cl.d}</div></div></div>
+      <div class="repstat"><span>🏅 ${myRank}등 / ${N}명</span><span>${d.total}점 / 300</span></div>
+      <h3>🧭 배팅 성향</h3>
+      <div class="hint" style="margin-bottom:4px">${esc(name)}님은 ${leanTxt}. ${aggrTxt}. ${accTxt}.</div>
+      <h3>✨ 신의 한 수</h3>
+      ${hits.length?hits.slice(0,3).map(it=>`<div class="bd-it hit"><span>${lbl(it.label)}</span><span>+${it.pts}점</span></div>`).join(''):'<div class="hint" style="margin:0">…이번엔 없었어요 😇</div>'}
+      <h3>💥 패착 원인</h3>
+      ${misses.length?misses.slice(0,4).map(it=>`<div class="repmiss"><div class="rmlbl">${lbl(it.label)} <span class="rmpt">-${it.max}점</span></div><div class="rmvs">내 예측 <b>${esc(String(it.yours))}</b> → 실제 <b>${esc(String(it.actual))}</b></div></div>`).join(''):'<div class="hint" style="margin:0">완벽했어요! 🎉</div>'}
+    </div>`,true);
 }
 // 순위 카드 — 내부 탭(이 경기 | 종합)
 function rankingsCard(mid){
