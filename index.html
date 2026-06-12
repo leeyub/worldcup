@@ -805,9 +805,9 @@ function betSplit(){
   const pos=new Array(N);                       // 동점은 평균 등수 → 같은 금액
   let i=0;
   while(i<N){let j=i;while(j+1<N&&rows[j+1].t===rows[i].t)j++;const avg=(i+j)/2;for(let k=i;k<=j;k++)pos[k]=avg;i=j+1;}
-  // 순위 비례 상금: 가중치 (N - 등수) → 1등 최다 … 꼴등 최소, 합 = 상금풀
-  const W=N*(N+1)/2;
-  const prize=pos.map(pv=>Math.round(pool*(N-pv)/W/100)*100);
+  // 순위 비례 상금: 가중치 (N-1-등수) → 1등 최다 … 꼴등 0(판돈 9,000원 전액 잃음), 합 = 상금풀
+  const W=N*(N-1)/2;
+  const prize=pos.map(pv=>Math.round(pool*(N-1-pv)/W/100)*100);
   prize[0]+=pool-prize.reduce((a,b)=>a+b,0);    // 반올림 잔액은 1등 상금에 보정
   // 최종 낼 돈 = 점심엔빵 + 판돈 - 받은 상금
   const amt=prize.map(pr=>gross-pr);
