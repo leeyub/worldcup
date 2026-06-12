@@ -584,8 +584,8 @@ function renderMatch(mid){
   <div class="minfo">${m.label} · ${m.date} · ${m.venue} ${L.finished?'<span class="endchip">경기 종료</span>':liveNow(m,M)?'<span class="livechip"><span class="dot"></span>LIVE</span>':''}</div>`;
   if(M.locked)html+=commentTicker(M);
 
-  // 라이브 시작 후(L.on)엔 참여자 카드 숨김 — 경기 집중
-  if(!L.on){
+  // 실제 라이브 진행 중(킥오프 후)에만 참여자 카드 숨김 — 경기 집중. 마감/라이브 시작만으론 유지.
+  if(!liveNow(m,M)){
     html+=`<div class="card"><h3>👥 참여자 <span class="pt">${S.participants.length}명</span></h3>`;
     if(!S.participants.length){
       html+=`<span class="hint">아직 없음 — 어드민이 ⚙️에서 직원을 등록하세요</span>`;
@@ -1025,6 +1025,7 @@ async function undoEv(mid){
   if(log.length&&log[log.length-1]==='card'&&L.cards>0){L.cards--;log.pop();await writeLive(mid);render();return;}
   if(L.goals.length){if(confirm('마지막 골을 취소할까요?')){L.goals.pop();await writeLive(mid);render();}return;}
   if(L.half){if(confirm('전반 종료 기록을 취소할까요?')){L.half=null;await writeLive(mid);render();}return;}
+  if(L.on&&!L.goals.length&&!L.cards&&!L.half){if(confirm('라이브 시작을 취소할까요? (아직 입력된 골·카드가 없습니다)')){L.on=false;await writeLive(mid);render();}return;}
   toast('취소할 입력이 없어요',true);
 }
 function goalDlg(mid,team){
