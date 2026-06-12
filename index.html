@@ -23,9 +23,9 @@
   --gold:#d4880c; --green:#159b6e; --pill:#eef0f3; --sel:rgba(47,107,223,.10); --selbd:#2f6bdf;
   color-scheme:light;
 }
-:root[data-theme="light"] .card{border-color:#ece6db;box-shadow:0 1px 2px rgba(60,50,30,.04),0 8px 20px rgba(60,50,30,.06)}
-:root[data-theme="light"] .lbrow{box-shadow:0 1px 2px rgba(60,50,30,.04),0 4px 12px rgba(60,50,30,.05)}
-:root[data-theme="light"] .tab{box-shadow:0 1px 2px rgba(60,50,30,.04)}
+:root[data-theme="light"] .card{box-shadow:0 1px 2px rgba(17,24,39,.05),0 8px 20px rgba(17,24,39,.07)}
+:root[data-theme="light"] .lbrow{box-shadow:0 1px 2px rgba(17,24,39,.05),0 4px 12px rgba(17,24,39,.06)}
+:root[data-theme="light"] .tab{box-shadow:0 1px 2px rgba(17,24,39,.05)}
 :root[data-theme="light"] .tab.on{background:linear-gradient(135deg,#e9effc,#dce6fb);color:#1d4ed8}
 :root[data-theme="light"] #modal{background:rgba(35,35,45,.42)}
 :root[data-theme="light"] #modal.sheet{background:var(--bg)}
@@ -594,7 +594,7 @@ function renderMatch(mid){
       const waitList=S.participants.filter(p=>!M.preds[p.id]);
       const chip=(p,done)=>`<span class="chip ${done?'done':''}">${avatarOf(p.id)} ${esc(p.name)}${done?'<span class="ck">✓</span>':''}</span>`;
       if(doneList.length)html+=`<div class="pgroup"><div class="glabel">제출 완료 <span class="gn">${doneList.length}명</span></div><div class="chips">${doneList.map(p=>chip(p,true)).join('')}</div></div>`;
-      if(waitList.length)html+=`<div class="pgroup"><div class="glabel">미제출 <span class="gn">${waitList.length}명</span></div><div class="chips">${waitList.map(p=>chip(p,false)).join('')}</div></div>`;
+      if(waitList.length)html+=`<div class="pgroup"><div class="glabel">미제출 <span class="gn">${waitList.length}명</span> <span style="font-weight:600;font-style:italic">(판돈은 여러분께 기부!)</span></div><div class="chips">${waitList.map(p=>chip(p,false)).join('')}</div></div>`;
     }
     html+=`</div>`;
   }
