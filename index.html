@@ -887,6 +887,17 @@ function assignClusters(mid){
   for(const o of order){const pick=o.cand.find(c=>!used.has(c.n))||o.cand[o.cand.length-1];used.add(pick.n);out[o.pid]=pick;}
   return out;
 }
+// 1차전 장외 에피소드 — 각자 오늘 실제로 있었던 일을 배팅 리포트에 엮어 재미 요소로 ({cl}=클러스터명)
+const ANECDOTES_M1={
+  '승표':`입을 크게 벌렸는데도 끝내 카메라가 안 잡아줬다죠 📷. 화면발은 빗나갔어도 ‘{cl}’다운 픽은 카메라보다 정확했길!`,
+  '태현':`먹고 싶던 딸기빙수 기어코 먹는 데 성공 🍧. 입맛은 100% 적중인데, 예측 적중률도 딱 그만큼이었으면 ‘{cl}’ 소리 제대로 들었겠죠?`,
+  '호민':`혼자 선글라스만 챙겨오고 정작 응원석엔 셔츠를 두고 왔다는 호민님 🕶️. 디테일 챙기다 한 끗 흘리는 게, 어쩐지 오늘 픽이랑 닮았네요.`,
+  '화빈':`승표님 때문에 얼떨결에 팥딸기빙수를 영접한 날 🍧. 남 따라간 빙수처럼, 오늘 픽도 분위기에 살짝 휩쓸렸나요?`,
+  '상화':`한 줄 코멘트 예언대로 진짜 치킨을 뜯게 된 상화님 🍗. 입으로 한 말을 점수로 증명한, 그야말로 ‘{cl}’.`,
+  '동엽':`맥주 한 잔 안 사주면서 기자들 ‘다 같이 짠!’ 포즈에 시달린 하루 🍺📸. 카메라엔 실컷 잡혔는데 점수판엔 ‘{cl}’으로 남았네요.`,
+  '승현':`기자들에게 이름까지 팔리고 인터뷰도 한 오늘의 셀럽 🎤. 유명세만큼 픽도 화제였는지는 ‘{cl}’ 리포트가 말해주죠.`,
+  '도현':`고대 옷까지 챙겨 왔지만 끝내 못 입은 날 👕. 만반의 준비가 무색했던 게, 오늘 픽이랑 평행이론이네요.`
+};
 function showReport(mid,pid){
   const M=S.matches[mid],m=MATCHES.find(x=>x.id===mid),O=TEAMS[m.opp];
   const d=reportData(pid,mid); if(!d)return;
@@ -894,7 +905,8 @@ function showReport(mid,pid){
   const order=S.participants.filter(x=>M.preds[x.id]).map(x=>({id:x.id,t:sc[x.id].total})).sort((a,b)=>b.t-a.t);
   const ranks=tieRanks(order.map(o=>o.t)), myRank=ranks[order.findIndex(o=>o.id===pid)], N=order.length;
   const cl=assignClusters(mid)[pid]||clusterOf(d), p=d.p, f=d.f, name=gname(S.participants.find(x=>x.id===pid).name);
-  const pct=d.total/300, grade=pct>=.8?'S':pct>=.65?'A':pct>=.55?'B':pct>=.4?'C':pct>=.25?'D':'F';
+  const tmi=(mid==='m1'&&ANECDOTES_M1[name])?ANECDOTES_M1[name].split('{cl}').join(cl.n):null;
+  const pct=d.total/300, grade=pct>=.62?'S':pct>=.48?'A':pct>=.36?'B':pct>=.24?'C':pct>=.12?'D':'F';  // 300점 만점은 사실상 불가 → 현실적 곡선으로 상향
   const resHit=p.result===f.outcome, mvpHit=p.mvp===f.mvp;
   const lbl=l=>l==='상대 첫 득점자'?O.flag+' 첫 득점자':l;
   const res=v=>v===1?'🇰🇷 한국 승':v===0?'무승부':O.name+' 승';
@@ -933,6 +945,7 @@ function showReport(mid,pid){
       <div class="repstat"><span>🏅 ${myRank}등 / ${N}명</span><span class="repgrade g${grade}">${grade}등급</span><span>${d.total} / 300점</span></div>
       <div class="repverdict">🗣️ ${myRank}등 · ${grade}등급 — “${cl.n}” 다운 한 판이었어요.</div>
       <div class="repsec"><h3>🧭 배팅 성향</h3><div class="repp">${style}</div></div>
+      ${tmi?`<div class="repsec"><h3>🎪 오늘의 장외 스토리</h3><div class="repp">${tmi}</div></div>`:''}
       <div class="repsec"><h3>🎬 무슨 일이 있었나</h3><div class="reptl">${tl}</div></div>
       <div class="repsec"><h3>✨ 신의 한 수</h3>
         ${hits.length?hits.slice(0,4).map(it=>`<div class="rephit"><span>${lbl(it.label)} · 내 예측 ${esc(String(it.yours))}</span><span class="hp">+${it.pts}점</span></div>`).join(''):'<div class="repp dim">…이번엔 빈손이었어요 😇</div>'}
