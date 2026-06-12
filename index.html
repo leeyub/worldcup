@@ -152,6 +152,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .lbrow .pts{font-size:18px;font-weight:900;color:var(--gold)}
 .lbrow .pend{font-size:10px;color:var(--sub)}
 .lbrow.first{border-color:var(--selbd);background:linear-gradient(135deg,var(--sel),var(--card2))}
+.lbrow.me{border-color:var(--selbd);background:var(--sel);box-shadow:inset 0 0 0 1.5px var(--selbd)}  /* 로그인한 본인 행 = 선택 표시 */
 .permatch{width:100%;display:flex;gap:16px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:11px;color:var(--sub)}
 .permatch b{color:var(--txt);font-weight:800;margin-left:3px}
 .lbrow.gain{animation:gain 1.2s}
@@ -180,12 +181,13 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .lbrow.rep:active{transform:scale(.99)}
 .repclubadge{display:block;font-size:11px;font-weight:700;color:var(--gold);margin-top:2px}
 .repchev{color:var(--sub);font-size:18px;font-weight:700;margin-left:2px}
-.repclu{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:var(--sel);border:1px solid var(--selbd);margin-bottom:14px}
+.repcard{word-break:keep-all}  /* 본문 단어단위 줄바꿈(한글 가독성) */
+.repclu{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:var(--sel);border:1px solid var(--selbd);margin-bottom:20px}
 .repclu .ic{font-size:42px;line-height:1}
 .repclu .cn{font-size:18px;font-weight:900}
 .repclu .cd{font-size:12px;color:var(--sub);margin-top:3px;line-height:1.45}
-.repstat{display:flex;justify-content:space-between;font-size:14px;font-weight:800;padding-bottom:8px;border-bottom:1px solid var(--line)}
-.repsec{margin-top:18px}
+.repstat{display:flex;justify-content:space-between;font-size:14px;font-weight:800;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.repsec{margin-top:26px}
 .repsec h3{margin:0 0 9px}
 .repp{font-size:13px;line-height:1.65;color:var(--txt)}
 .repp.dim{color:var(--sub)}
@@ -193,7 +195,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .rephit{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--green);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.22);border-radius:9px;padding:9px 12px;margin-bottom:6px}
 .rephit:last-child{margin-bottom:0}
 .rephit .hp{font-weight:900;white-space:nowrap}
-.repmiss{border-left:3px solid var(--red);padding:6px 0 6px 11px;margin-bottom:9px}
+.repmiss{border-left:3px solid var(--red);padding:2px 0 2px 11px;margin-bottom:13px}  /* 빨간 라인이 콘텐츠보다 살짝만 높게 */
 .repmiss:last-child{margin-bottom:0}
 .repmiss .rmlbl{font-size:13px;font-weight:800}
 .repmiss .rmpt{color:var(--red);font-size:11px;font-weight:800}
@@ -201,11 +203,11 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .repmiss .rmvs b{color:var(--txt);font-weight:800}
 .repgrade{font-weight:900}
 .gS{color:#a855f7}.gA{color:var(--green)}.gB{color:var(--blue)}.gC{color:var(--gold)}.gD{color:#f97316}.gF{color:var(--red)}
-.repverdict{font-size:13px;font-weight:700;background:var(--pill);border-radius:10px;padding:11px 13px;margin-bottom:2px;line-height:1.5}
+.repverdict{font-size:13px;font-weight:700;background:var(--pill);border-radius:10px;padding:11px 13px;margin-top:14px;margin-bottom:2px;line-height:1.5}
 .reptl .tlrow{font-size:13px;padding:8px 0;border-bottom:1px dashed var(--line);line-height:1.55}
 .reptl .tlrow:last-child{border-bottom:none}
 .reptl b{font-weight:800;color:var(--txt)}
-.betdesc{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.betdesc{margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
 .betdesc .bdt{font-size:12px;font-weight:800;margin-bottom:7px}
 .betdesc .bdl{font-size:12px;color:var(--txt);line-height:1.6;margin-bottom:5px}
 .betdesc .bdl:last-child{margin-bottom:0}
@@ -741,13 +743,13 @@ function matchRows(M,anim,mid){
     const top=ranks[i]===1&&r.total>0;
     if(fin){ // 경기 종료 → 순위 행이 곧 개인 리포트 입구(유니크 클러스터 배지 + 클릭 시 상세)
       const cl=assigned[r.pid];
-      return `<div class="lbrow rep ${top?'first':''}" onclick="showReport('${mid}','${r.pid}')">
+      return `<div class="lbrow rep ${top?'first':''}${r.pid===USER?' me':''}" onclick="showReport('${mid}','${r.pid}')">
         <span class="rk">${top?'👑':ranks[i]}</span>
-        <span class="nm">${avatarOf(r.pid)} ${esc(gpname(r.pid))}${r.pid===USER?' <span class="tag">나</span>':''}<span class="repclubadge">${cl.e} ${cl.n}</span></span>
+        <span class="nm">${avatarOf(r.pid)} ${esc(gpname(r.pid))}${r.pid===USER?' <span class="tag">나</span>':''}<span class="repclubadge">${cl.n}</span></span>
         <span class="pts">${r.total}점</span><span class="repchev">›</span>
       </div>`;
     }
-    return `<div class="lbrow ${top?'first':''}" data-pid="${r.pid}" onclick="this.classList.toggle('open')" style="flex-wrap:wrap">
+    return `<div class="lbrow ${top?'first':''}${r.pid===USER?' me':''}" data-pid="${r.pid}" onclick="this.classList.toggle('open')" style="flex-wrap:wrap">
       <span class="rk">${top?'👑':ranks[i]}</span>
       <span class="nm">${avatarOf(r.pid)} ${esc(gpname(r.pid))}${r.pid===USER?' <span class="tag">나</span>':''}</span>
       <span class="pts">${r.total}점</span>
@@ -768,9 +770,9 @@ function totalRows(){
   return `<div class="lb">${rows.map((r,i)=>{
     const top=ranks[i]===1&&r.t>0;
     const last=rows.length>=3&&i===rows.length-1&&r.t>0;
-    return `<div class="lbrow ${top?'first':''}" style="flex-wrap:wrap">
+    return `<div class="lbrow ${top?'first':''}${r.p.id===USER?' me':''}" style="flex-wrap:wrap">
       <span class="rk">${top?'👑':ranks[i]}</span>
-      <span class="nm">${avatarOf(r.p.id)} ${esc(gname(r.p.name))} ${last?'<span class="tag">🍗 치킨</span>':''}</span>
+      <span class="nm">${avatarOf(r.p.id)} ${esc(gname(r.p.name))}${r.p.id===USER?' <span class="tag">나</span>':''} ${last?'<span class="tag">🍗 치킨</span>':''}</span>
       <span class="pts">${r.t}점</span>
       <div class="permatch">${r.per.map((v,j)=>`<span>${j+1}차 <b>${v===null?'-':v}</b></span>`).join('')}</div>
     </div>`;
@@ -807,14 +809,14 @@ function betCard(){
     return `<div class="betrow ${top?'free':''} ${last?'most':''}"><span class="brk">${top?'👑':ranks[i]}</span><span class="bnm">${avatarOf(r.p.id)} ${esc(gname(r.p.name))}</span><span class="bamt">${won(amt[i])}원 ${face}</span></div>`;
   }).join('');
   return `<div class="card"><h3>🍱 점심값 내기 <span class="pt">총 ${won(BILL_TOTAL)}원</span></h3>
-    ${li}
     <div class="betdesc">
       <div class="bdt">💡 어떻게 나눴나요?</div>
       <div class="bdl"><b>①</b> 먼저 <b>${won(Math.round(base))}원</b>씩 똑같이 엔빵 <span class="bds">(${won(BILL_TOTAL)} ÷ ${N}명)</span></div>
       <div class="bdl"><b>②</b> 거기서 <b>등수만큼 가감</b> — 한 등수 위면 <b>${won(BILL_STEP)}원</b> 깎고, 한 등수 아래면 ${won(BILL_STEP)}원 더 냄</div>
       <div class="bdl"><b>③</b> 그래서 1등이 가장 적게(<b>${won(amt[0])}원</b>), 꼴등이 가장 많이(<b>${won(amt[N-1])}원</b>) — 격차 ${won(spread)}원, 합계는 그대로 ${won(BILL_TOTAL)}원</div>
       <div class="bdl bds">※ 동점은 같은 금액 · 100원 단위 반올림 · 현재 순위 기준(경기 끝나면 자동 갱신)</div>
-    </div></div>`;
+    </div>
+    ${li}</div>`;
 }
 /* ---------- 개인 경기 리포트 (예측 vs 결과) ---------- */
 function reportData(pid,mid){
@@ -942,11 +944,13 @@ function rankingsCard(mid){
   const t=S.rankTab||'this';
   const stab=(v,l)=>`<button class="subtab ${t===v?'on':''}" onclick="S.rankTab='${v}';render()">${l}</button>`;
   const body=t==='total'?totalRows():matchRows(M,true,mid);
-  const foot=t==='total'?'3경기 합산 · 최대 900점 · 행을 누르면 경기별 점수':(M.live.finished?'경기 종료 · 이름을 누르면 📑 개인 상세 리포트':'이 경기 점수 · 행을 누르면 항목별 점수');
+  const report=M.live.finished&&t!=='total';
+  const foot=t==='total'?'3경기 합산 · 최대 900점 · 행을 누르면 경기별 점수':'이 경기 점수 · 행을 누르면 항목별 점수';
   return `<div class="card"><h3>📊 순위</h3>
     <div class="subtabs">${stab('this','이 경기')}${stab('total','종합')}</div>
+    ${report?'<div class="hint" style="margin:0 0 10px">경기 종료 · 이름을 누르면 📑 개인 상세 리포트</div>':''}
     ${body}
-    <div class="hint" style="margin:8px 0 0">${foot}</div></div>`;
+    ${report?'':`<div class="hint" style="margin:8px 0 0">${foot}</div>`}</div>`;
 }
 function boardCard(mid,m,O,M){
   const f=getFacts(M);
