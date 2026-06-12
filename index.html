@@ -176,14 +176,10 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .betrow.free .bamt{color:var(--green)}
 .betrow.most .bamt{color:var(--red)}
 /* 개인 리포트 */
-.reprow{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card2);cursor:pointer;transition:.12s}
-.reprow:last-of-type{margin-bottom:0}
-.reprow:active{transform:scale(.99)}
-.reprow .brk{font-size:15px;font-weight:900;width:24px;text-align:center}
-.reprow .repnm{flex:1;font-weight:700;font-size:14px;min-width:0}
-.reprow .repclubadge{display:block;font-size:11px;font-weight:700;color:var(--gold);margin-top:2px}
-.reprow .reppt{font-weight:900;font-size:14px;color:var(--gold);white-space:nowrap}
-.reprow .repchev{color:var(--sub);font-size:18px;font-weight:700}
+.lbrow.rep{cursor:pointer}
+.lbrow.rep:active{transform:scale(.99)}
+.repclubadge{display:block;font-size:11px;font-weight:700;color:var(--gold);margin-top:2px}
+.repchev{color:var(--sub);font-size:18px;font-weight:700;margin-left:2px}
 .repclu{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:var(--sel);border:1px solid var(--selbd);margin-bottom:14px}
 .repclu .ic{font-size:42px;line-height:1}
 .repclu .cn{font-size:18px;font-weight:900}
@@ -668,7 +664,6 @@ function renderMatch(mid){
       html+=rankingsCard(mid);
     }
     html+=betCard();
-    html+=reportCard(mid);
     html+=boardCard(mid,m,O,M);
     html+=commentsCard(mid,M);
     html+=rulesCard();   // 마감(진행 중·종료) 후에도 항목별 배점을 친구들이 조회 가능
@@ -727,8 +722,17 @@ function matchRows(M,anim,mid){
   const ranks=tieRanks(rows.map(r=>r.total));
   const oppFlag=mid&&MATCHES.find(x=>x.id===mid)?TEAMS[MATCHES.find(x=>x.id===mid).opp].flag:'';
   const lbl=l=>l==='상대 첫 득점자'&&oppFlag?oppFlag+' 첫 득점자':l;
+  const fin=M.live.finished;
   return `<div class="lb" ${anim?'id="lb"':''}>${rows.map((r,i)=>{
     const top=ranks[i]===1&&r.total>0;
+    if(fin){ // 경기 종료 → 순위 행이 곧 개인 리포트 입구(클러스터 배지 + 클릭 시 상세)
+      const cl=clusterOf(reportData(r.pid,mid));
+      return `<div class="lbrow rep ${top?'first':''}" onclick="showReport('${mid}','${r.pid}')">
+        <span class="rk">${top?'👑':ranks[i]}</span>
+        <span class="nm">${avatarOf(r.pid)} ${esc(gpname(r.pid))}${r.pid===USER?' <span class="tag">나</span>':''}<span class="repclubadge">${cl.e} ${cl.n}</span></span>
+        <span class="pts">${r.total}점</span><span class="repchev">›</span>
+      </div>`;
+    }
     return `<div class="lbrow ${top?'first':''}" data-pid="${r.pid}" onclick="this.classList.toggle('open')" style="flex-wrap:wrap">
       <span class="rk">${top?'👑':ranks[i]}</span>
       <span class="nm">${avatarOf(r.pid)} ${esc(gpname(r.pid))}${r.pid===USER?' <span class="tag">나</span>':''}</span>
@@ -838,22 +842,6 @@ function clusterOf(d){
   if(pct<=.42)return{e:'🎲',n:'느낌적인 느낌파',d:'데이터보다 직감. 오늘은 직감이 휴가 갔네요.'};
   return{e:'🎢',n:'들쭉날쭉 감성 베터',d:'맞을 땐 맞고 틀릴 땐 화끈하게.'};
 }
-function reportCard(mid){
-  const M=S.matches[mid]; if(!M.live.finished)return '';
-  const subs=S.participants.filter(p=>M.preds[p.id]); if(!subs.length)return '';
-  const sc=matchScores(M);
-  const order=subs.map(p=>({p,t:sc[p.id].total})).sort((a,b)=>b.t-a.t);
-  const ranks=tieRanks(order.map(o=>o.t));
-  const li=order.map((o,i)=>{
-    const cl=clusterOf(reportData(o.p.id,mid)),top=ranks[i]===1;
-    return `<div class="reprow" onclick="showReport('${mid}','${o.p.id}')">
-      <span class="brk">${top?'👑':ranks[i]}</span>
-      <span class="repnm">${avatarOf(o.p.id)} ${esc(gname(o.p.name))}<span class="repclubadge">${cl.e} ${cl.n}</span></span>
-      <span class="reppt">${o.t}점</span><span class="repchev">›</span></div>`;
-  }).join('');
-  return `<div class="card"><h3>📑 개인 리포트 <span class="pt">${MATCHES.find(x=>x.id===mid).label}</span></h3>
-    <div class="hint">각자 예측을 경기 결과와 비교한 리포트예요. 이름을 누르면 상세 분석 👀</div>${li}</div>`;
-}
 function showReport(mid,pid){
   const M=S.matches[mid],m=MATCHES.find(x=>x.id===mid),O=TEAMS[m.opp];
   const d=reportData(pid,mid); if(!d)return;
@@ -913,7 +901,7 @@ function rankingsCard(mid){
   const t=S.rankTab||'this';
   const stab=(v,l)=>`<button class="subtab ${t===v?'on':''}" onclick="S.rankTab='${v}';render()">${l}</button>`;
   const body=t==='total'?totalRows():matchRows(M,true,mid);
-  const foot=t==='total'?'3경기 합산 · 최대 900점 · 행을 누르면 경기별 점수':'이 경기 점수 · 행을 누르면 항목별 점수';
+  const foot=t==='total'?'3경기 합산 · 최대 900점 · 행을 누르면 경기별 점수':(M.live.finished?'경기 종료 · 이름을 누르면 📑 개인 상세 리포트':'이 경기 점수 · 행을 누르면 항목별 점수');
   return `<div class="card"><h3>📊 순위</h3>
     <div class="subtabs">${stab('this','이 경기')}${stab('total','종합')}</div>
     ${body}
