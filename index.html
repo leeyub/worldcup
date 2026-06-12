@@ -185,18 +185,32 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .repclu .cn{font-size:18px;font-weight:900}
 .repclu .cd{font-size:12px;color:var(--sub);margin-top:3px;line-height:1.45}
 .repstat{display:flex;justify-content:space-between;font-size:14px;font-weight:800;padding-bottom:8px;border-bottom:1px solid var(--line)}
-.repcard h3{margin-top:16px}
-.repmiss{border-left:3px solid var(--red);padding:5px 0 5px 10px;margin-bottom:8px}
-.repmiss .rmlbl{font-size:13px;font-weight:700}
+.repsec{margin-top:18px}
+.repsec h3{margin:0 0 9px}
+.repp{font-size:13px;line-height:1.65;color:var(--txt)}
+.repp.dim{color:var(--sub)}
+.repp b{font-weight:800}
+.rephit{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--green);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.22);border-radius:9px;padding:9px 12px;margin-bottom:6px}
+.rephit:last-child{margin-bottom:0}
+.rephit .hp{font-weight:900;white-space:nowrap}
+.repmiss{border-left:3px solid var(--red);padding:6px 0 6px 11px;margin-bottom:9px}
+.repmiss:last-child{margin-bottom:0}
+.repmiss .rmlbl{font-size:13px;font-weight:800}
 .repmiss .rmpt{color:var(--red);font-size:11px;font-weight:800}
-.repmiss .rmvs{font-size:12px;color:var(--sub);margin-top:2px}
+.repmiss .rmvs{font-size:12.5px;color:var(--sub);margin-top:3px;line-height:1.55}
 .repmiss .rmvs b{color:var(--txt);font-weight:800}
 .repgrade{font-weight:900}
 .gS{color:#a855f7}.gA{color:var(--green)}.gB{color:var(--blue)}.gC{color:var(--gold)}.gD{color:#f97316}.gF{color:var(--red)}
-.repverdict{font-size:13px;font-weight:700;background:var(--pill);border-radius:10px;padding:10px 12px;margin-bottom:2px;line-height:1.5}
-.reptl .tlrow{font-size:12.5px;padding:7px 0;border-bottom:1px dashed var(--line);line-height:1.55}
+.repverdict{font-size:13px;font-weight:700;background:var(--pill);border-radius:10px;padding:11px 13px;margin-bottom:2px;line-height:1.5}
+.reptl .tlrow{font-size:13px;padding:8px 0;border-bottom:1px dashed var(--line);line-height:1.55}
 .reptl .tlrow:last-child{border-bottom:none}
 .reptl b{font-weight:800;color:var(--txt)}
+.betdesc{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.betdesc .bdt{font-size:12px;font-weight:800;margin-bottom:7px}
+.betdesc .bdl{font-size:12px;color:var(--txt);line-height:1.6;margin-bottom:5px}
+.betdesc .bdl:last-child{margin-bottom:0}
+.betdesc .bdl b{font-weight:800}
+.betdesc .bds{color:var(--sub)}
 .evlog{font-size:12px;color:var(--sub);line-height:1.9}
 #toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
 .toast{background:linear-gradient(135deg,rgba(37,99,235,.88),rgba(59,130,246,.80));color:#eff6ff;border:1px solid rgba(147,197,253,.45);padding:8px 16px;border-radius:99px;font-size:13px;font-weight:800;backdrop-filter:blur(8px) saturate(1.3);-webkit-backdrop-filter:blur(8px) saturate(1.3);box-shadow:0 6px 20px rgba(0,0,0,.18);animation:tin .3s, tout .4s 2.6s forwards}
@@ -722,11 +736,11 @@ function matchRows(M,anim,mid){
   const ranks=tieRanks(rows.map(r=>r.total));
   const oppFlag=mid&&MATCHES.find(x=>x.id===mid)?TEAMS[MATCHES.find(x=>x.id===mid).opp].flag:'';
   const lbl=l=>l==='상대 첫 득점자'&&oppFlag?oppFlag+' 첫 득점자':l;
-  const fin=M.live.finished;
+  const fin=M.live.finished, assigned=fin?assignClusters(mid):null;
   return `<div class="lb" ${anim?'id="lb"':''}>${rows.map((r,i)=>{
     const top=ranks[i]===1&&r.total>0;
-    if(fin){ // 경기 종료 → 순위 행이 곧 개인 리포트 입구(클러스터 배지 + 클릭 시 상세)
-      const cl=clusterOf(reportData(r.pid,mid));
+    if(fin){ // 경기 종료 → 순위 행이 곧 개인 리포트 입구(유니크 클러스터 배지 + 클릭 시 상세)
+      const cl=assigned[r.pid];
       return `<div class="lbrow rep ${top?'first':''}" onclick="showReport('${mid}','${r.pid}')">
         <span class="rk">${top?'👑':ranks[i]}</span>
         <span class="nm">${avatarOf(r.pid)} ${esc(gpname(r.pid))}${r.pid===USER?' <span class="tag">나</span>':''}<span class="repclubadge">${cl.e} ${cl.n}</span></span>
@@ -763,7 +777,8 @@ function totalRows(){
   }).join('')}</div>`;
 }
 /* ---------- 점심값 내기 분배 (등수 차등, 1등 0원) ---------- */
-const BILL_TOTAL=196000; // 점심값 총액(원). 바꾸려면 이 값만 수정.
+const BILL_TOTAL=196000; // 점심값 총액(원)
+const BILL_STEP=4000;    // 등수 한 칸당 차등액(원). 0=완전 엔빵, 클수록 1등·꼴등 격차↑
 function won(n){return n.toLocaleString('ko-KR');}
 function betSplit(){
   const totals={};
@@ -772,29 +787,34 @@ function betSplit(){
   const rows=S.participants.map(p=>({p,t:totals[p.id]})).sort((a,b)=>b.t-a.t);
   const N=rows.length;
   if(N<2)return null;
-  const W=N*(N-1)/2;                 // 가중치 합: 0+1+…+(N-1)
-  const weights=new Array(N);        // 동점 그룹은 평균 가중치 → 같은 금액
+  const base=BILL_TOTAL/N, mid=(N-1)/2;      // 엔빵 기준 + 등수 차등
+  const pos=new Array(N);                     // 동점 그룹은 평균 등수 → 같은 금액
   let i=0;
-  while(i<N){let j=i;while(j+1<N&&rows[j+1].t===rows[i].t)j++;const avg=(i+j)/2;for(let k=i;k<=j;k++)weights[k]=avg;i=j+1;}
-  const amt=weights.map(w=>Math.round(w/W*BILL_TOTAL/100)*100); // 100원 단위
-  amt[N-1]+=BILL_TOTAL-amt.reduce((a,b)=>a+b,0);                // 반올림 잔액은 꼴등에게
-  return {rows,amt};
+  while(i<N){let j=i;while(j+1<N&&rows[j+1].t===rows[i].t)j++;const avg=(i+j)/2;for(let k=i;k<=j;k++)pos[k]=avg;i=j+1;}
+  const amt=pos.map(pp=>Math.max(0,Math.round((base+(pp-mid)*BILL_STEP)/100)*100));
+  amt[N-1]+=BILL_TOTAL-amt.reduce((a,b)=>a+b,0); // 잔액 보정(꼴등)
+  return {rows,amt,base};
 }
 function betCard(){
   if(!MATCHES.some(m=>S.matches[m.id].live.finished))return ''; // 한 경기라도 끝나야 표시
   const b=betSplit(); if(!b)return '';
-  const {rows,amt}=b;
+  const {rows,amt,base}=b;
   const ranks=tieRanks(rows.map(r=>r.t));
-  const allDone=MATCHES.every(m=>S.matches[m.id].live.finished);
+  const N=rows.length, spread=amt[N-1]-amt[0];
   const li=rows.map((r,i)=>{
-    const top=ranks[i]===1, last=i===rows.length-1&&amt[i]>0;
+    const top=ranks[i]===1, last=i===N-1;
     const face=top?'😎':last?'😭':'';
-    return `<div class="betrow ${top?'free':''} ${last?'most':''}"><span class="brk">${top?'👑':ranks[i]}</span><span class="bnm">${avatarOf(r.p.id)} ${esc(gname(r.p.name))}</span><span class="bamt">${amt[i]===0?'0원 🎉':won(amt[i])+'원'} ${face}</span></div>`;
+    return `<div class="betrow ${top?'free':''} ${last?'most':''}"><span class="brk">${top?'👑':ranks[i]}</span><span class="bnm">${avatarOf(r.p.id)} ${esc(gname(r.p.name))}</span><span class="bamt">${won(amt[i])}원 ${face}</span></div>`;
   }).join('');
   return `<div class="card"><h3>🍱 점심값 내기 <span class="pt">총 ${won(BILL_TOTAL)}원</span></h3>
-    <div class="hint">${allDone?'🏁 최종 결과! 1등은 공짜 😎':'현재 순위 기준 — 경기 끝날 때마다 갱신돼요'}</div>
     ${li}
-    <div class="hint" style="margin:12px 0 0;line-height:1.6">💡 분배 방식: 등수 가중치(1등 0 · 2등 1 · 3등 2 ⋯ 꼴등 ${rows.length-1})에 비례해 총 ${won(BILL_TOTAL)}원을 나눠요. 한 등수 내려갈 때마다 일정액씩 더, 동점은 같은 금액.</div></div>`;
+    <div class="betdesc">
+      <div class="bdt">💡 어떻게 나눴나요?</div>
+      <div class="bdl"><b>①</b> 먼저 <b>${won(Math.round(base))}원</b>씩 똑같이 엔빵 <span class="bds">(${won(BILL_TOTAL)} ÷ ${N}명)</span></div>
+      <div class="bdl"><b>②</b> 거기서 <b>등수만큼 가감</b> — 한 등수 위면 <b>${won(BILL_STEP)}원</b> 깎고, 한 등수 아래면 ${won(BILL_STEP)}원 더 냄</div>
+      <div class="bdl"><b>③</b> 그래서 1등이 가장 적게(<b>${won(amt[0])}원</b>), 꼴등이 가장 많이(<b>${won(amt[N-1])}원</b>) — 격차 ${won(spread)}원, 합계는 그대로 ${won(BILL_TOTAL)}원</div>
+      <div class="bdl bds">※ 동점은 같은 금액 · 100원 단위 반올림 · 현재 순위 기준(경기 끝나면 자동 갱신)</div>
+    </div></div>`;
 }
 /* ---------- 개인 경기 리포트 (예측 vs 결과) ---------- */
 function reportData(pid,mid){
@@ -811,36 +831,55 @@ function reportData(pid,mid){
   const rich=items.map(it=>({...it,yours:(VA[it.label]||['-','-'])[0],actual:(VA[it.label]||['-','-'])[1]}));
   return {p,f,O,items:rich,total};
 }
-function clusterOf(d){
+// 클러스터 후보를 우선순위 배열로 (앞쪽일수록 더 잘 맞는 별명)
+function clusterCandidates(d){
   const {p,f,total}=d, pct=total/300;
   const exact=p.kr===f.kr&&p.opp===f.opp, resHit=p.result===f.outcome;
-  const krHit=p.krFirst===f.krFirst, opHit=p.oppFirst===f.oppFirst, scorers=(krHit?1:0)+(opHit?1:0);
+  const scorers=(p.krFirst===f.krFirst?1:0)+(p.oppFirst===f.oppFirst?1:0);
   const mvpHit=p.mvp===f.mvp, ftHit=p.firstTeam===f.firstTeam, bandHit=p.band===f.firstBand;
   const totGoals=p.kr+p.opp;
-  if(exact&&resHit&&scorers===2&&mvpHit)return{e:'🛸',n:'미래에서 온 예언자',d:'스코어·득점자·MVP까지 전부 적중. 타임머신 어디서 사셨어요?'};
-  if(exact&&resHit&&scorers===2)return{e:'🔮',n:'전지적 작가 시점',d:'스코어도 득점자도 꿰뚫음. 경기를 직접 쓰고 오셨나요?'};
-  if(exact&&resHit&&mvpHit)return{e:'🏆',n:'MVP 콕 찍은 척척박사',d:'스코어에 MVP까지, 소름 돋는 적중력.'};
-  if(scorers===2)return{e:'👀',n:'선수 분석 끝판왕',d:'양 팀 첫 득점자를 다 맞히는 변태적 디테일.'};
-  if(exact&&resHit&&bandHit)return{e:'🎯',n:'스코어 저격수',d:'스코어에 첫 골 타이밍까지 — 야무진 디테일.'};
-  if(exact&&resHit){
-    if(total>=150)return{e:'📈',n:'데이터 분석관',d:'숫자는 거의 신의 영역. 사람만 살짝 놓침.'};
-    if(total>=135)return{e:'🧮',n:'숫자의 마술사',d:'스코어는 神인데 득점자는 영 딴사람. 그래도 고득점.'};
-    return{e:'📐',n:'결과만 보는 거시예측가',d:'스코어는 맞혔지만 누가 넣을진 관심 밖.'};
-  }
-  if(resHit&&scorers===1)return{e:'🕵️',n:'반쪽짜리 셜록',d:'한 명은 맞혔는데 나머지 하나가 못내 아쉬워.'};
-  if(p.result===-1&&f.outcome===1)return{e:'🐸',n:'청개구리 역배러',d:'남들 반대로 갔다 장렬히… 그래도 간지는 챙김.'};
-  if(p.result===0&&f.outcome!==0)return{e:'🦥',n:'무승부 도사의 헛발질',d:'무난하게 비긴다더니 경기는 화끈하게 갈렸네요.'};
-  if(p.kr>=4)return{e:'🚀',n:'화력덕후 대포알',d:`한국 ${p.kr}골 다득점에 올인한 낭만파.`};
-  if(totGoals>=5)return{e:'🎆',n:'난타전 신봉자',d:'골 잔치를 예상한 화끈한 베터.'};
-  if(totGoals===0)return{e:'🧊',n:'0:0 수문장',d:'무득점 진흙탕을 예상한 초수비형… 경기는 달랐지만.'};
-  if(bandHit&&ftHit)return{e:'⏱️',n:'타이밍의 마술사',d:'첫 골 팀과 시간대를 정확히 — 흐름을 읽는 눈.'};
-  if(resHit&&pct>=.5)return{e:'🇰🇷',n:'믿음의 애국 베터',d:'한국 믿고 갔고, 한국이 보답했다.'};
-  if(resHit&&pct>=.38)return{e:'🌤️',n:'무난한 중도파',d:'크게 튀지 않고 본전은 챙기는 스타일.'};
-  if(mvpHit)return{e:'🎖️',n:'MVP만 건진 한 끗',d:'다 틀려도 MVP 하나는 건졌다!'};
-  if(pct<=.15)return{e:'🙈',n:'역대급 헛다리',d:'이 정도면 일부러 틀린 거 아닌가요? 점심 잘 부탁드립니다.'};
-  if(pct<=.3)return{e:'🤡',n:'헛다리의 명장',d:'열심히 찍었는데 방향이… 다음 판을 노려요.'};
-  if(pct<=.42)return{e:'🎲',n:'느낌적인 느낌파',d:'데이터보다 직감. 오늘은 직감이 휴가 갔네요.'};
-  return{e:'🎢',n:'들쭉날쭉 감성 베터',d:'맞을 땐 맞고 틀릴 땐 화끈하게.'};
+  const C=[],A=(e,n,dd)=>C.push({e,n,d:dd});
+  if(exact&&resHit&&scorers===2&&mvpHit)A('🛸','미래에서 온 예언자','스코어·득점자·MVP까지 전부 적중. 타임머신 어디서 사셨어요?');
+  if(exact&&resHit&&scorers===2)A('🔮','전지적 작가 시점','스코어도 득점자도 꿰뚫음. 경기를 직접 쓰고 오셨나요?');
+  if(exact&&resHit&&mvpHit)A('🏆','MVP 콕 찍은 척척박사','스코어에 MVP까지, 소름 돋는 적중력.');
+  if(scorers===2)A('👀','선수 분석 끝판왕','양 팀 첫 득점자를 다 맞히는 변태적 디테일.');
+  if(exact&&resHit&&bandHit)A('🎯','스코어 저격수','스코어에 첫 골 타이밍까지 — 야무진 디테일.');
+  if(bandHit&&ftHit)A('⏱️','타이밍의 마술사','첫 골 팀과 시간대를 정확히 — 흐름을 읽는 눈.');
+  if(exact&&resHit&&total>=150)A('📈','데이터 분석관','숫자는 거의 신의 영역. 사람만 살짝 놓침.');
+  if(exact&&resHit&&total>=135)A('🧮','숫자의 마술사','스코어는 神인데 득점자는 영 딴사람.');
+  if(exact&&resHit)A('📐','결과만 보는 거시예측가','스코어는 맞혔지만 누가 넣을진 관심 밖.');
+  if(scorers===1)A('🕵️','반쪽짜리 셜록','한 명은 맞혔는데 나머지 하나가 아쉬워.');
+  if(p.result===-1&&f.outcome===1)A('🐸','청개구리 역배러','남들 반대로 갔다 장렬히… 그래도 간지는 챙김.');
+  if(p.result===0&&f.outcome!==0)A('🦥','무승부 도사의 헛발질','무난하게 비긴다더니 경기는 화끈하게 갈렸네요.');
+  if(p.kr>=4)A('🚀','화력덕후 대포알','한국 다득점에 올인한 낭만파.');
+  if(totGoals>=5)A('🎆','난타전 신봉자','골 잔치를 예상한 화끈한 베터.');
+  if(totGoals===0)A('🧊','0:0 수문장','무득점 진흙탕을 예상한 초수비형.');
+  if(mvpHit)A('🎖️','MVP만 건진 한 끗','다 틀려도 MVP 하나는 건졌다!');
+  if(ftHit)A('🧲','선제골 예언자','첫 골 팀을 정확히 짚은 감각.');
+  if(bandHit)A('⏰','시계추 베터','첫 골 시간대를 맞힌 타이밍 센스.');
+  if(resHit&&pct>=.5)A('🇰🇷','믿음의 애국 베터','한국 믿고 갔고, 한국이 보답했다.');
+  if(resHit&&pct>=.38)A('🌤️','무난한 중도파','크게 튀지 않고 본전은 챙기는 스타일.');
+  if(pct<=.15)A('🙈','역대급 헛다리','이 정도면 일부러? 점심 잘 부탁드립니다.');
+  if(pct<=.3)A('🤡','헛다리의 명장','열심히 찍었는데 방향이… 다음 판을 노려요.');
+  if(pct<=.45)A('🎲','느낌적인 느낌파','데이터보다 직감. 오늘은 직감이 휴가 갔네요.');
+  // 폴백 풀(중복 방지용 여분 — 항상 뒤에 추가)
+  A('🎢','들쭉날쭉 감성 베터','맞을 땐 맞고 틀릴 땐 화끈하게.');
+  A('🃏','한 끗 차이 승부사','아슬아슬하게 비껴간 한 판.');
+  A('🧭','마이웨이 예측가','남 신경 안 쓰고 내 길을 간다.');
+  A('🪄','반전 매력의 베터','예측은 평범, 결과는 의외.');
+  A('🐢','꾸준함의 미학','느리지만 묵묵히.');
+  return C;
+}
+function clusterOf(d){return clusterCandidates(d)[0];}
+// 같은 경기 참여자끼리 별명이 겹치지 않도록 유니크 배정 (점수 높은 순으로 우선 선점)
+function assignClusters(mid){
+  const M=S.matches[mid], sc=matchScores(M);
+  const order=S.participants.filter(p=>M.preds[p.id])
+    .map(p=>({pid:p.id,t:sc[p.id]?sc[p.id].total:0,cand:clusterCandidates(reportData(p.id,mid))}))
+    .sort((a,b)=>b.t-a.t);
+  const used=new Set(),out={};
+  for(const o of order){const pick=o.cand.find(c=>!used.has(c.n))||o.cand[o.cand.length-1];used.add(pick.n);out[o.pid]=pick;}
+  return out;
 }
 function showReport(mid,pid){
   const M=S.matches[mid],m=MATCHES.find(x=>x.id===mid),O=TEAMS[m.opp];
@@ -848,7 +887,7 @@ function showReport(mid,pid){
   const sc=matchScores(M);
   const order=S.participants.filter(x=>M.preds[x.id]).map(x=>({id:x.id,t:sc[x.id].total})).sort((a,b)=>b.t-a.t);
   const ranks=tieRanks(order.map(o=>o.t)), myRank=ranks[order.findIndex(o=>o.id===pid)], N=order.length;
-  const cl=clusterOf(d), p=d.p, f=d.f, name=gname(S.participants.find(x=>x.id===pid).name);
+  const cl=assignClusters(mid)[pid]||clusterOf(d), p=d.p, f=d.f, name=gname(S.participants.find(x=>x.id===pid).name);
   const pct=d.total/300, grade=pct>=.8?'S':pct>=.65?'A':pct>=.55?'B':pct>=.4?'C':pct>=.25?'D':'F';
   const resHit=p.result===f.outcome, mvpHit=p.mvp===f.mvp;
   const lbl=l=>l==='상대 첫 득점자'?O.flag+' 첫 득점자':l;
@@ -886,13 +925,15 @@ function showReport(mid,pid){
       <div class="repclu"><span class="ic">${cl.e}</span><div><div class="cn">${cl.n}</div><div class="cd">${cl.d}</div></div></div>
       <div class="repstat"><span>🏅 ${myRank}등 / ${N}명</span><span class="repgrade g${grade}">${grade}등급</span><span>${d.total} / 300점</span></div>
       <div class="repverdict">🗣️ ${myRank}등 · ${grade}등급 — “${cl.n}” 다운 한 판이었어요.</div>
-      <h3>🧭 배팅 성향</h3><div class="hint" style="margin-bottom:2px">${style}</div>
-      <h3>🎬 무슨 일이 있었나</h3><div class="reptl">${tl}</div>
-      <h3>✨ 신의 한 수</h3>
-      ${hits.length?hits.slice(0,4).map(it=>`<div class="bd-it hit"><span>${lbl(it.label)} · 내 예측 ${esc(String(it.yours))}</span><span>+${it.pts}점</span></div>`).join(''):'<div class="hint" style="margin:0">…이번엔 빈손이었어요 😇</div>'}
-      <h3>💥 패착 분석</h3>
-      ${misses.length?misses.slice(0,4).map(it=>`<div class="repmiss"><div class="rmlbl">${lbl(it.label)} <span class="rmpt">-${it.max}점</span></div><div class="rmvs">${why[it.label]||('내 예측 <b>'+esc(String(it.yours))+'</b> → 실제 <b>'+esc(String(it.actual))+'</b>')}</div></div>`).join(''):'<div class="hint" style="margin:0">완벽했어요! 흠잡을 데가 없네요 🎉</div>'}
-      <h3>🔮 다음 판 조언</h3><div class="hint" style="margin-bottom:2px">${advice}</div>
+      <div class="repsec"><h3>🧭 배팅 성향</h3><div class="repp">${style}</div></div>
+      <div class="repsec"><h3>🎬 무슨 일이 있었나</h3><div class="reptl">${tl}</div></div>
+      <div class="repsec"><h3>✨ 신의 한 수</h3>
+        ${hits.length?hits.slice(0,4).map(it=>`<div class="rephit"><span>${lbl(it.label)} · 내 예측 ${esc(String(it.yours))}</span><span class="hp">+${it.pts}점</span></div>`).join(''):'<div class="repp dim">…이번엔 빈손이었어요 😇</div>'}
+      </div>
+      <div class="repsec"><h3>💥 패착 분석</h3>
+        ${misses.length?misses.slice(0,4).map(it=>`<div class="repmiss"><div class="rmlbl">${lbl(it.label)} <span class="rmpt">-${it.max}점</span></div><div class="rmvs">${why[it.label]||('내 예측 <b>'+esc(String(it.yours))+'</b> → 실제 <b>'+esc(String(it.actual))+'</b>')}</div></div>`).join(''):'<div class="repp dim">완벽했어요! 흠잡을 데가 없네요 🎉</div>'}
+      </div>
+      <div class="repsec"><h3>🔮 다음 판 조언</h3><div class="repp">${advice}</div></div>
     </div>`,true);
 }
 // 순위 카드 — 내부 탭(이 경기 | 종합)
