@@ -130,6 +130,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .bgtag{font-size:10px;font-weight:800;padding:2px 7px;border-radius:7px}
 .bgtag.ok{background:rgba(52,211,153,.18);color:var(--green)}
 .bgtag.uni{background:var(--sel);color:var(--gold)}
+.bgtag.no{background:rgba(248,113,113,.16);color:#f87171}
 .bgn{font-size:12px;color:var(--sub);line-height:1.7}
 /* 한 줄 코멘트 — 카드 + 상단 롤링 티커 */
 .cmts{display:flex;flex-direction:column;gap:10px}
@@ -729,20 +730,24 @@ function rankingsCard(mid){
 }
 function boardCard(mid,m,O,M){
   const f=getFacts(M);
+  const L=M.live;
+  // 현재까지의 라이브 사실 — 정답이 아직 확정 안 됐어도 "이미 불가능"해진 예측을 가려내는 데 사용
+  const krNow=L.goals.filter(g=>g.team==='kr').length, opNow=L.goals.filter(g=>g.team==='opp').length;
+  const gScored=L.goals.length>0, cardsNow=L.cards;
   const pids=Object.keys(M.preds);
   if(!pids.length)return'';
   const oname=O.name;
-  const resTxt=v=>v===1?'🇰🇷 승':v===0?'무':oname+' 승';
+  const resTxt=v=>v===1?'🇰🇷 승':v===0?'무':O.flag+' 승';
   const ftTxt=v=>v==='kr'?'🇰🇷':v==='opp'?O.flag+oname:'무득점';
   const CATS=[
     {key:'result',label:'경기 결과',get:p=>resTxt(p.result),fact:'outcome'in f?resTxt(f.outcome):undefined},
-    {key:'score',label:'최종 스코어',get:p=>p.kr+':'+p.opp,fact:'outcome'in f?f.kr+':'+f.opp:undefined},
+    {key:'score',label:'최종 스코어',get:p=>p.kr+':'+p.opp,fact:'outcome'in f?f.kr+':'+f.opp:undefined,dead:p=>p.kr<krNow||p.opp<opNow},
     {key:'krFirst',label:'🇰🇷 첫 득점자',get:p=>p.krFirst,fact:f.krFirst},
     {key:'oppFirst',label:`${O.flag} 첫 득점자`,get:p=>p.oppFirst,fact:f.oppFirst},
     {key:'firstTeam',label:'첫 골 팀',get:p=>ftTxt(p.firstTeam),fact:f.firstTeam!==undefined?ftTxt(f.firstTeam):undefined},
-    {key:'band',label:'첫 골 시간대',get:p=>bandTxt(p.band),fact:'firstBand'in f?bandTxt(f.firstBand):undefined},
+    {key:'band',label:'첫 골 시간대',get:p=>bandTxt(p.band),fact:'firstBand'in f?bandTxt(f.firstBand):undefined,dead:p=>!gScored&&('half'in f)&&p.band<=2},
     {key:'half',label:'전반전',get:p=>resTxt(p.half),fact:'half'in f?resTxt(f.half):undefined},
-    {key:'cards',label:'카드 수',get:p=>CARDS[p.cards],fact:'cards'in f?CARDS[f.cards]:undefined},
+    {key:'cards',label:'카드 수',get:p=>CARDS[p.cards],fact:'cards'in f?CARDS[f.cards]:undefined,dead:p=>(p.cards===0&&cardsNow>2)||(p.cards===1&&cardsNow>5)},
     {key:'mvp',label:'MVP',get:p=>p.mvp,fact:f.mvp}
   ];
   const cur=CATS.find(c=>c.key===(S.boardTab||'result'))||CATS[0];
@@ -751,17 +756,26 @@ function boardCard(mid,m,O,M){
   // 같은 예측끼리 그룹핑 → 인원 많은 순 (단독 픽은 자연히 1명 그룹으로 분리)
   const groups={};
   pids.forEach(pid=>{const v=String(cur.get(M.preds[pid]));(groups[v]=groups[v]||[]).push(pid);});
+  let deadAny=false;
   const body=Object.entries(groups).sort((a,b)=>b[1].length-a[1].length).map(([v,ids])=>{
-    const hit=known&&v===factStr, solo=ids.length===1&&pids.length>=3;
-    const cls=known?(hit?'hit':'miss'):(solo?'solo':'');
-    const badge=known?(hit?'<span class="bgtag ok">정답</span>':''):(solo?'<span class="bgtag uni">단독</span>':'');
+    const hit=known&&v===factStr;
+    const dead=!known&&!!cur.dead&&cur.dead(M.preds[ids[0]]);   // 정답 미확정이지만 이미 불가능해진 픽
+    if(dead)deadAny=true;
+    const solo=!dead&&ids.length===1&&pids.length>=3;
+    const cls=known?(hit?'hit':'miss'):(dead?'miss':(solo?'solo':''));
+    const badge=known?(hit?'<span class="bgtag ok">정답</span>':'')
+      :dead?'<span class="bgtag no">탈락</span>'
+      :(solo?'<span class="bgtag uni">단독</span>':'');
     return `<div class="bgroup ${cls}">
       <div class="bgv">${esc(v)} <span class="bgc">${ids.length}명</span>${badge}</div>
       <div class="bgn">${ids.map(pid=>`${avatarOf(pid)} ${esc(gpname(pid))}`).join(' · ')}</div>
     </div>`;
   }).join('');
+  const hint=known?'정답은 초록, 빗나간 예측은 흐리게 · 같은 예측끼리 묶음'
+    :deadAny?'이미 빗나간 예측은 흐리게 · 같은 예측끼리 묶음'
+    :'같은 예측끼리 묶었어요 · 단독 = 혼자 고른 예측';
   return `<div class="card"><h3>👀 ${m.label} 예측 비교</h3>
-    <div class="hint">${known?'정답은 초록, 빗나간 예측은 흐리게 · 같은 예측끼리 묶음':'같은 예측끼리 묶었어요 · 단독 = 혼자 고른 예측'}</div>
+    <div class="hint">${hint}</div>
     <div class="btabs">${tabs}</div>
     ${body}</div>`;
 }
