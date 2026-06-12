@@ -630,6 +630,7 @@ function renderMatch(mid){
     }
     html+=boardCard(mid,m,O,M);
     html+=commentsCard(mid,M);
+    html+=rulesCard();   // 마감(진행 중·종료) 후에도 항목별 배점을 친구들이 조회 가능
   }
   $('#app').innerHTML=html;
 }
@@ -689,7 +690,7 @@ function matchRows(M,anim,mid){
       <span class="rk">${top?'👑':ranks[i]}</span>
       <span class="nm">${avatarOf(r.pid)} ${esc(gpname(r.pid))}${r.pid===USER?' <span class="tag">나</span>':''}</span>
       <span class="pts">${r.total}점</span>
-      <div class="breakdown">${r.items.map(it=>`<div class="bd-it ${it.state}"><span>${lbl(it.label)}</span><span>${it.state==='pend'?'⏳ 대기':it.pts+'/'+it.max}</span></div>`).join('')}</div>
+      <div class="breakdown">${r.items.map(it=>`<div class="bd-it ${it.state}"><span>${lbl(it.label)}</span><span>${it.state==='pend'?'⏳ '+it.max+'점':it.pts+'/'+it.max}</span></div>`).join('')}</div>
     </div>`;}).join('')}</div>`;
 }
 // 종합(3경기 합산) 순위 행들
