@@ -211,6 +211,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .reptl .tlmine.ok{color:var(--green)}
 .reptl .tlmine.no{color:var(--red)}
 .reptl .tlv.ok{color:var(--green)} .reptl .tlv.no{color:var(--red)}  /* 득점자별 적중/실패 색상 */
+.reptl .tlmine.mix{color:var(--txt)}  /* 득점자 한쪽만 맞은 경우 '내 예측' 라벨은 기본 텍스트색 */
 .reptl b{font-weight:800;color:var(--txt)}
 .betdesc{margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
 .betdesc .bdt{font-size:12px;font-weight:800;margin-bottom:7px}
@@ -891,8 +892,8 @@ function assignClusters(mid){
 // 1차전 장외 에피소드 — 각자 오늘 실제로 있었던 일을 배팅 리포트에 엮어 재미 요소로 ({cl}=클러스터명)
 const ANECDOTES_M1={
   '승표':`입을 크게 벌렸는데도 끝내 카메라가 안 잡아줬다죠 📷. 화면발은 빗나갔어도 ‘{cl}’다운 픽은 카메라보다 정확했길!`,
-  '태현':`먹고 싶던 딸기빙수 기어코 먹는 데 성공 🍧. 입맛은 100% 적중인데, 예측 적중률도 딱 그만큼이었으면 ‘{cl}’ 소리 제대로 들었겠죠?`,
-  '호민':`혼자 선글라스만 챙겨오고 정작 응원석엔 셔츠를 두고 왔다는 호민님 🕶️. 디테일 챙기다 한 끗 흘리는 게, 어쩐지 오늘 픽이랑 닮았네요.`,
+  '태현':`먹고 싶던 딸기빙수는 기어코 먹는 데 성공 🍧. 입맛 적중률은 100%인데, 예측 적중률이 그 절반만 됐어도 오늘 점수가 한결 달콤했을 텐데 말이죠.`,
+  '호민':`혼자 선글라스만 챙겨오고 정작 응원석엔 셔츠를 두고 온 호민님 🕶️. 디테일 챙기다 한 끗 흘리는 게, 어쩐지 오늘 픽이랑 닮았네요.`,
   '화빈':`승표님 때문에 얼떨결에 팥딸기빙수를 영접한 날 🍧. 남 따라간 빙수처럼, 오늘 픽도 분위기에 살짝 휩쓸렸나요?`,
   '상화':`한 줄 코멘트 예언대로 진짜 치킨을 뜯게 된 상화님 🍗. 입으로 한 말을 점수로 증명한, 그야말로 ‘{cl}’.`,
   '동엽':`맥주 한 잔 안 사주면서 기자들 ‘다 같이 짠!’ 포즈에 시달린 하루 🍺📸. 카메라엔 실컷 잡혔는데 점수판엔 ‘{cl}’으로 남았네요.`,
@@ -920,9 +921,9 @@ function showReport(mid,pid){
   const tl=[
     {fact:`경기는 <b>${f.kr}:${f.opp}</b>, ${f.outcome===1?'🇰🇷 한국 승리':f.outcome===-1?O.flag+' '+O.name+' 승':'무승부'}`, mine:`내 예측 ${res(p.result)}`, ok:resHit},
     {fact:`첫 골: <b>${ftTeam(f.firstTeam)}</b>이 <b>${bandTxt(f.firstBand)}</b>에 선제`, mine:`내 예측 ${bandTxt(p.band)}`, ok:p.band===f.firstBand},
-    {fact:`득점자: 🇰🇷 <b>${esc(f.krFirst)}</b> · ${O.flag} <b>${esc(f.oppFirst)}</b>`, mine:`내 예측 <span class="tlv ${krHit?'ok':'no'}">${esc(p.krFirst)} ${krHit?'✅':'❌'}</span> · <span class="tlv ${opHit?'ok':'no'}">${esc(p.oppFirst)} ${opHit?'✅':'❌'}</span>`, ok:null},
+    {fact:`득점자: 🇰🇷 <b>${esc(f.krFirst)}</b> · ${O.flag} <b>${esc(f.oppFirst)}</b>`, mine:`내 예측 <span class="tlv ${krHit?'ok':'no'}">${esc(p.krFirst)} ${krHit?'✅':'❌'}</span> · <span class="tlv ${opHit?'ok':'no'}">${esc(p.oppFirst)} ${opHit?'✅':'❌'}</span>`, ok:null, cls:(krHit&&opHit)?'ok':(!krHit&&!opHit)?'no':'mix'},
     {fact:`MVP: <b>${f.mvp?esc(f.mvp):'발표 전'}</b>`, mine:`내 예측 ${esc(p.mvp)}`, ok:f.mvp?mvpHit:null}
-  ].map(t=>{const mk=t.ok===true?'✅ ':t.ok===false?'❌ ':'',cls=t.ok===true?'ok':t.ok===false?'no':'';
+  ].map(t=>{const mk=t.ok===true?'✅ ':t.ok===false?'❌ ':'',cls=t.cls!==undefined?t.cls:(t.ok===true?'ok':t.ok===false?'no':'');
     return `<div class="tlrow"><div class="tlfact">${t.fact}</div><div class="tlmine ${cls}">${mk}${t.mine}</div></div>`;}).join('');
   const why={
     '경기 결과':`승부의 방향부터 어긋났어요. ${res(p.result)}이라 믿었지만 경기는 ${res(f.outcome)}. 여기서 60점이 통째로…`,
@@ -967,7 +968,7 @@ function rankingsCard(mid){
   const foot=t==='total'?'3경기 합산 · 최대 900점 · 행을 누르면 경기별 점수':'이 경기 점수 · 행을 누르면 항목별 점수';
   return `<div class="card"><h3>📊 순위</h3>
     <div class="subtabs">${stab('this','이 경기')}${stab('total','종합')}</div>
-    ${report?'<div class="hint" style="margin:0 0 10px">경기 종료 · 이름을 누르면 📑 개인 상세 리포트</div>':''}
+    ${report?'<div class="hint" style="margin:0 0 12px;line-height:1.6">오늘의 경기가 종료되었어요.<br>이름을 누르면 개인 베팅 성향에 대한 상세 리포트를 볼 수 있어요.</div>':''}
     ${body}
     ${report?'':`<div class="hint" style="margin:8px 0 0">${foot}</div>`}</div>`;
 }
