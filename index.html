@@ -409,6 +409,11 @@ function liveSig(){
     +JSON.stringify(S.participants.map(p=>p.id+p.name+(p.emoji||'')));
 }
 async function refresh(){
+  // 코멘트 입력 중에는 5초 폴링 재렌더를 건너뛴다.
+  // (전체 DOM 재생성으로 입력 글자·포커스·모바일 키보드가 날아가서
+  //  '변경' 버튼이 안 먹히는 것처럼 보이던 문제 방지 — 입력칸을 벗어나면 다시 동작)
+  const _ae=document.activeElement;
+  if(_ae&&_ae.id&&_ae.id.startsWith('cmt_'))return;
   const mid=S.tab;
   const before=(mid!=='total'&&LOADED)?matchScores(S.matches[mid]):null;
   const Lb=(mid!=='total'&&LOADED)?S.matches[mid].live:null;
