@@ -182,10 +182,10 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .repclubadge{display:block;font-size:11px;font-weight:700;color:var(--gold);margin-top:2px}
 .repchev{color:var(--sub);font-size:18px;font-weight:700;margin-left:2px}
 .repcard{word-break:keep-all}  /* 본문 단어단위 줄바꿈(한글 가독성) */
-.repclu{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:var(--sel);border:1px solid var(--selbd);margin-bottom:20px}
-.repclu .ic{font-size:42px;line-height:1}
-.repclu .cn{font-size:18px;font-weight:900}
-.repclu .cd{font-size:12px;color:var(--sub);margin-top:3px;line-height:1.45}
+.repclu{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:28px 18px;border-radius:16px;background:var(--sel);border:1px solid var(--selbd);margin-bottom:20px}  /* 시원한 프로필 카드 — 세로 스택·중앙정렬 */
+.repclu .ic{font-size:64px;line-height:1}
+.repclu .cn{font-size:21px;font-weight:900}
+.repclu .cd{font-size:12.5px;color:var(--sub);margin-top:5px;line-height:1.5}
 .repstat{display:flex;justify-content:space-between;font-size:14px;font-weight:800;padding-bottom:14px;border-bottom:1px solid var(--line)}
 .repsec{margin-top:26px}
 .repsec h3{margin:0 0 9px}
@@ -204,8 +204,12 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .repgrade{font-weight:900}
 .gS{color:#a855f7}.gA{color:var(--green)}.gB{color:var(--blue)}.gC{color:var(--gold)}.gD{color:#f97316}.gF{color:var(--red)}
 .repverdict{font-size:13px;font-weight:700;background:var(--pill);border-radius:10px;padding:11px 13px;margin-top:14px;margin-bottom:2px;line-height:1.5}
-.reptl .tlrow{font-size:13px;padding:8px 0;border-bottom:1px dashed var(--line);line-height:1.55}
+.reptl .tlrow{padding:11px 0;border-bottom:1px dashed var(--line)}
 .reptl .tlrow:last-child{border-bottom:none}
+.reptl .tlfact{font-size:13.5px;line-height:1.5;color:var(--txt)}
+.reptl .tlmine{font-size:12px;line-height:1.45;color:var(--sub);margin-top:5px}  /* 내 예측 비교 — 보조 텍스트로 분리 */
+.reptl .tlmine.ok{color:var(--green)}
+.reptl .tlmine.no{color:var(--red)}
 .reptl b{font-weight:800;color:var(--txt)}
 .betdesc{margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
 .betdesc .bdt{font-size:12px;font-weight:800;margin-bottom:7px}
@@ -901,11 +905,12 @@ function showReport(mid,pid){
   const aggr=p.kr>=3?'한국 다득점을 노린 공격형':(p.kr+p.opp)<=1?'짠물 승부를 그린 수비형':'적당한 스코어를 그린 균형형';
   const style=`${esc(name)}님은 <b>${lean}</b>이자 <b>${aggr}</b> 베터예요. 한국 ${p.kr}:${p.opp}에 첫 골은 ${ftTeam(p.firstTeam)}, 첫 득점자 ${esc(p.krFirst)}, MVP ${esc(p.mvp)}로 그림을 그렸죠.`;
   const tl=[
-    `경기는 <b>${f.kr}:${f.opp}</b>, ${f.outcome===1?'🇰🇷 한국 승리':f.outcome===-1?O.flag+' '+O.name+' 승':'무승부'} — 결과 예측 ${res(p.result)} ${resHit?'✅':'❌'}`,
-    `첫 골: <b>${ftTeam(f.firstTeam)}</b>이 <b>${bandTxt(f.firstBand)}</b>에 선제 — 시간대 예측 ${bandTxt(p.band)} ${p.band===f.firstBand?'✅':'❌'}`,
-    `득점자: 🇰🇷 <b>${esc(f.krFirst)}</b> · ${O.flag} <b>${esc(f.oppFirst)}</b> — 예측 ${esc(p.krFirst)} / ${esc(p.oppFirst)}`,
-    `MVP: <b>${esc(f.mvp)}</b> — 예측 ${esc(p.mvp)} ${mvpHit?'✅':'❌'}`
-  ].map(t=>`<div class="tlrow">${t}</div>`).join('');
+    {fact:`경기는 <b>${f.kr}:${f.opp}</b>, ${f.outcome===1?'🇰🇷 한국 승리':f.outcome===-1?O.flag+' '+O.name+' 승':'무승부'}`, mine:`내 예측 ${res(p.result)}`, ok:resHit},
+    {fact:`첫 골: <b>${ftTeam(f.firstTeam)}</b>이 <b>${bandTxt(f.firstBand)}</b>에 선제`, mine:`내 예측 ${bandTxt(p.band)}`, ok:p.band===f.firstBand},
+    {fact:`득점자: 🇰🇷 <b>${esc(f.krFirst)}</b> · ${O.flag} <b>${esc(f.oppFirst)}</b>`, mine:`내 예측 ${esc(p.krFirst)} / ${esc(p.oppFirst)}`, ok:null},
+    {fact:`MVP: <b>${f.mvp?esc(f.mvp):'발표 전'}</b>`, mine:`내 예측 ${esc(p.mvp)}`, ok:f.mvp?mvpHit:null}
+  ].map(t=>{const mk=t.ok===true?'✅ ':t.ok===false?'❌ ':'',cls=t.ok===true?'ok':t.ok===false?'no':'';
+    return `<div class="tlrow"><div class="tlfact">${t.fact}</div><div class="tlmine ${cls}">${mk}${t.mine}</div></div>`;}).join('');
   const why={
     '경기 결과':`승부의 방향부터 어긋났어요. ${res(p.result)}이라 믿었지만 경기는 ${res(f.outcome)}. 여기서 60점이 통째로…`,
     '최종 스코어':`${p.kr}:${p.opp} vs 실제 <b>${f.kr}:${f.opp}</b>. 스코어는 디테일의 영역, 한 끗이 곧 점수죠.`,
