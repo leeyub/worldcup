@@ -1348,7 +1348,8 @@ function goalDlg(mid,team){
   const hbtn=h=>`<button class="opt bl ${GOALHALF===h?'on':''}" onclick="setGoalHalf(${h})">${h===1?'전반':'후반'}</button>`;
   showModal(`<div class="card"><h3>⚽ ${T.flag} ${T.name} 골!</h3>
     <div class="hint">득점자 · 전반/후반 · 그 하프에서의 분을 입력하세요</div>
-    <select class="sel" id="g_scorer">${T.players.map(p=>`<option>${p.n}</option>`).join('')}<option>자책골/기타</option></select>
+    <select class="sel" id="g_scorer" onchange="document.getElementById('g_scorer_etc').style.display=this.value==='__etc__'?'block':'none'">${T.players.map(p=>`<option>${p.n}</option>`).join('')}<option value="__etc__">✏️ 직접 입력 (명단에 없는 선수)</option><option>자책골/기타</option></select>
+    <input class="txtin" id="g_scorer_etc" placeholder="선수 이름 직접 입력" style="display:none;margin-top:8px">
     <div class="opts c2" id="g_half" style="margin-top:8px">${hbtn(1)}${hbtn(2)}</div>
     <div style="margin-top:8px"><input class="txtin" id="g_min" type="number" min="1" max="60" placeholder="그 하프에서 몇 분? (예: 13)"></div>
     <button class="btn p w" onclick="confirmGoal('${mid}','${team}')">골 기록!</button>
@@ -1356,7 +1357,8 @@ function goalDlg(mid,team){
 }
 function setGoalHalf(h){GOALHALF=h;document.querySelectorAll('#g_half .opt').forEach((b,i)=>b.classList.toggle('on',i===h-1));}
 function confirmGoal(mid,team){
-  const sc=$('#g_scorer').value, min=parseInt($('#g_min').value);
+  let sc=$('#g_scorer').value; const min=parseInt($('#g_min').value);
+  if(sc==='__etc__'){sc=($('#g_scorer_etc').value||'').trim();if(!sc){alert('선수 이름을 입력하세요');return;}}
   if(!min||min<1){alert('시간(분)을 입력하세요');return;}
   const band=(GOALHALF===2?3:0)+(min<=15?0:min<=30?1:2);   // 하프 + 그 안의 분 → 시간대
   closeModal();
@@ -1388,13 +1390,16 @@ function mvpDlg(mid){
   const all=[...TEAMS.kr.players.map(p=>'🇰🇷 '+p.n),...O.players.map(p=>O.flag+' '+p.n)];
   showModal(`<div class="card"><h3>🏅 MVP 등록</h3>
     <div class="hint">MVP가 발표되면 선택하세요. 등록하는 순간 MVP 항목이 채점됩니다.</div>
-    <select class="sel" id="f_mvp">${all.map(n=>{const v=n.split(' ').slice(1).join(' ');return `<option value="${v}" ${cur===v?'selected':''}>${n}</option>`;}).join('')}</select>
+    <select class="sel" id="f_mvp" onchange="document.getElementById('f_mvp_etc').style.display=this.value==='__etc__'?'block':'none'">${all.map(n=>{const v=n.split(' ').slice(1).join(' ');return `<option value="${v}" ${cur===v?'selected':''}>${n}</option>`;}).join('')}<option value="__etc__">✏️ 직접 입력</option></select>
+    <input class="txtin" id="f_mvp_etc" placeholder="MVP 이름 직접 입력" style="display:none;margin-top:8px">
     <button class="btn p w" onclick="confirmMvp('${mid}')">MVP 등록 🏅</button>
     ${cur?`<button class="btn g w" onclick="clearMvp('${mid}')">아직 미정으로 되돌리기 (대기 ⏳)</button>`:''}
     <button class="btn g w" onclick="closeModal()">취소</button></div>`);
 }
 function confirmMvp(mid){
-  const mvp=$('#f_mvp').value;closeModal();
+  let mvp=$('#f_mvp').value;
+  if(mvp==='__etc__'){mvp=($('#f_mvp_etc').value||'').trim();if(!mvp){alert('MVP 이름을 입력하세요');return;}}
+  closeModal();
   toast('🏅 MVP 등록: '+mvp);
   withDiff(mid,()=>{S.matches[mid].live.mvp=mvp;});
 }
