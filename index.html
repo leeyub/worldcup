@@ -293,29 +293,37 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 /* ================= DATA ================= */
 const TEAMS = {
   kr:{name:'대한민국',flag:'🇰🇷',players:[
-    {n:'손흥민',pos:'FW',club:'LA FC',g:35,p:28},{n:'황희찬',pos:'FW',club:'울버햄튼',g:20,p:16},
-    {n:'조규성',pos:'FW',club:'미트윌란',g:20,p:13},{n:'오현규',pos:'FW',club:'베식타스',g:10,p:12},
-    {n:'이강인',pos:'MF',club:'PSG',g:12,p:10},{n:'양현준',pos:'FW',club:'셀틱',g:6,p:8},
-    {n:'배준호',pos:'MF',club:'스토크시티',g:4,p:4},{n:'이재성',pos:'MF',club:'마인츠',g:10,p:4},
-    {n:'황인범',pos:'MF',club:'페예노르트',g:7,p:3},{n:'김민재',pos:'DF',club:'바이에른뮌헨',g:3,p:1},
-    {n:'설영우',pos:'DF',club:'레드스타',g:1,p:1},{n:'조현우',pos:'GK',club:'울산',g:0,p:0}]},
+    {n:'손흥민',pos:'FW',club:'LA FC',g:53,p:28},{n:'황희찬',pos:'FW',club:'울버햄튼',g:16,p:15},
+    {n:'조규성',pos:'FW',club:'미트윌란',g:11,p:13},{n:'오현규',pos:'FW',club:'베식타시',g:5,p:12},
+    {n:'이강인',pos:'MF',club:'PSG',g:12,p:10},{n:'이재성',pos:'MF',club:'마인츠',g:11,p:6},
+    {n:'양현준',pos:'MF',club:'셀틱',g:3,p:6},{n:'황인범',pos:'MF',club:'페예노르트',g:5,p:5},
+    {n:'백승호',pos:'MF',club:'버밍엄시티',g:4,p:5},{n:'배준호',pos:'MF',club:'스토크시티',g:2,p:5},
+    {n:'엄지성',pos:'MF',club:'스완지시티',g:1,p:4},{n:'이동경',pos:'MF',club:'울산 HD',g:3,p:4},
+    {n:'김진규',pos:'MF',club:'전북',g:1,p:3},{n:'김민재',pos:'DF',club:'바이에른뮌헨',g:4,p:2}]},
   cz:{name:'체코',flag:'🇨🇿',players:[
-    {n:'P. 시크',pos:'FW',club:'레버쿠젠',g:25,p:30},{n:'J. 쿠흐타',pos:'FW',club:'스파르타 프라하',g:9,p:14},
-    {n:'A. 흘로젝',pos:'FW',club:'호펜하임',g:6,p:12},{n:'T. 소우체크',pos:'MF',club:'웨스트햄',g:14,p:11},
-    {n:'T. 호리',pos:'FW',club:'슬라비아 프라하',g:5,p:10},{n:'M. 히틸',pos:'FW',club:'슬라비아 프라하',g:7,p:9},
-    {n:'L. 프로보트',pos:'MF',club:'슬라비아 프라하',g:5,p:6},{n:'V. 체르니',pos:'MF',club:'볼프스부르크',g:5,p:5},
-    {n:'V. 쿠팔',pos:'DF',club:'웨스트햄',g:1,p:2},{n:'L. 크레이치',pos:'DF',club:'지로나',g:3,p:2}]},
+    {n:'P. 시크',pos:'FW',club:'레버쿠젠',g:24,p:30},{n:'A. 흘로젝',pos:'FW',club:'호펜하임',g:6,p:13},
+    {n:'J. 쿠흐타',pos:'FW',club:'스파르타 프라하',g:9,p:12},{n:'T. 소우체크',pos:'MF',club:'웨스트햄',g:14,p:11},
+    {n:'M. 히틸',pos:'FW',club:'슬라비아 프라하',g:7,p:10},{n:'T. 호리',pos:'FW',club:'슬라비아 프라하',g:5,p:9},
+    {n:'P. 슐츠',pos:'MF',club:'리옹',g:4,p:9},{n:'D. 비신스키',pos:'FW',club:'플젠',g:2,p:6},
+    {n:'L. 프로보트',pos:'MF',club:'슬라비아 프라하',g:5,p:6},{n:'V. 다리다',pos:'MF',club:'흐라데츠',g:6,p:4},
+    {n:'L. 크레이치',pos:'DF',club:'지로나',g:3,p:4},{n:'L. 체르프',pos:'MF',club:'플젠',g:1,p:3},
+    {n:'M. 사딜레크',pos:'MF',club:'슬라비아 프라하',g:1,p:3},{n:'T. 홀레시',pos:'DF',club:'슬라비아 프라하',g:2,p:3},
+    {n:'V. 쿠팔',pos:'DF',club:'웨스트햄',g:1,p:2},{n:'H. 소후레크',pos:'MF',club:'스파르타 프라하',g:0,p:2}]},
   mx:{name:'멕시코',flag:'🇲🇽',players:[
-    {n:'S. 히메네스',pos:'FW',club:'AC 밀란',g:15,p:25},{n:'R. 히메네스',pos:'FW',club:'풀럼',g:28,p:18},
-    {n:'C. 우에르타',pos:'FW',club:'안데를레흐트',g:5,p:12},{n:'A. 베가',pos:'MF',club:'톨루카',g:10,p:10},
-    {n:'J. 키노네스',pos:'FW',club:'알 콰드시야',g:8,p:8},{n:'O. 피네다',pos:'MF',club:'AEK 아테네',g:8,p:7},
-    {n:'E. 알바레스',pos:'MF',club:'페네르바흐체',g:5,p:5},{n:'R. 알바라도',pos:'MF',club:'과달라하라',g:7,p:5}]},
+    {n:'S. 히메네스',pos:'FW',club:'AC 밀란',g:15,p:24},{n:'R. 히메네스',pos:'FW',club:'풀럼',g:30,p:16},
+    {n:'C. 우에르타',pos:'FW',club:'안데를레흐트',g:5,p:10},{n:'A. 베가',pos:'FW',club:'톨루카',g:10,p:9},
+    {n:'J. 키노네스',pos:'FW',club:'알 콰드시야',g:8,p:8},{n:'A. 곤살레스',pos:'FW',club:'과달라하라',g:3,p:7},
+    {n:'R. 알바라도',pos:'MF',club:'과달라하라',g:7,p:6},{n:'O. 피네다',pos:'MF',club:'AEK 아테네',g:8,p:6},
+    {n:'G. 모라',pos:'MF',club:'티후아나',g:2,p:5},{n:'G. 마르티네스',pos:'FW',club:'산토스',g:4,p:5},
+    {n:'E. 알바레스',pos:'MF',club:'페네르바흐체',g:5,p:4},{n:'A. 피달고',pos:'MF',club:'아메리카',g:3,p:4},
+    {n:'L. 차베스',pos:'MF',club:'파추카',g:6,p:4},{n:'L. 로모',pos:'MF',club:'몬테레이',g:4,p:3}]},
   za:{name:'남아공',flag:'🇿🇦',players:[
-    {n:'L. 포스터',pos:'FW',club:'번리',g:10,p:24},{n:'I. 레이너스',pos:'FW',club:'선다운스',g:8,p:16},
-    {n:'O. 아폴리스',pos:'FW',club:'올랜도 파이리츠',g:7,p:14},{n:'E. 마코파',pos:'FW',club:'올랜도 파이리츠',g:6,p:12},
-    {n:'R. 모포켕',pos:'FW',club:'올랜도 파이리츠',g:4,p:11},{n:'T. 모코에나',pos:'MF',club:'선다운스',g:6,p:9},
-    {n:'T. 모레미',pos:'FW',club:'올랜도 파이리츠',g:3,p:7},{n:'T. 즈와니',pos:'MF',club:'선다운스',g:15,p:5},
-    {n:'T. 마세코',pos:'FW',club:'AEL 리마솔',g:2,p:4}]}
+    {n:'L. 포스터',pos:'FW',club:'번리',g:10,p:22},{n:'I. 레이너스',pos:'FW',club:'선다운스',g:8,p:15},
+    {n:'O. 아폴리스',pos:'FW',club:'올랜도 파이리츠',g:7,p:14},{n:'R. 모포켕',pos:'FW',club:'올랜도 파이리츠',g:4,p:12},
+    {n:'E. 마코파',pos:'FW',club:'올랜도 파이리츠',g:6,p:11},{n:'T. 모레미',pos:'FW',club:'올랜도 파이리츠',g:3,p:7},
+    {n:'T. 즈와네',pos:'MF',club:'선다운스',g:15,p:7},{n:'T. 모코에나',pos:'MF',club:'선다운스',g:6,p:6},
+    {n:'T. 마세코',pos:'FW',club:'AEL 리마솔',g:2,p:5},{n:'J. 아담스',pos:'MF',club:'선다운스',g:1,p:3},
+    {n:'T. 음바타',pos:'MF',club:'올랜도 파이리츠',g:1,p:3},{n:'S. 시톨레',pos:'MF',club:'톤델라',g:1,p:2}]}
 };
 const MATCHES = [
   {id:'m1',opp:'cz',label:'1차전',date:'6/12 (금) 11:00',venue:'과달라하라',kickoff:'2026-06-12T11:00'},
