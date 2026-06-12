@@ -246,7 +246,7 @@ const TEAMS = {
     {n:'A. 흘로젝',pos:'FW',club:'호펜하임',g:6,p:12},{n:'T. 소우체크',pos:'MF',club:'웨스트햄',g:14,p:11},
     {n:'T. 호리',pos:'FW',club:'슬라비아 프라하',g:5,p:10},{n:'M. 히틸',pos:'FW',club:'슬라비아 프라하',g:7,p:9},
     {n:'L. 프로보트',pos:'MF',club:'슬라비아 프라하',g:5,p:6},{n:'V. 체르니',pos:'MF',club:'볼프스부르크',g:5,p:5},
-    {n:'V. 쿠팔',pos:'DF',club:'웨스트햄',g:1,p:2}]},
+    {n:'V. 쿠팔',pos:'DF',club:'웨스트햄',g:1,p:2},{n:'L. 크레이치',pos:'DF',club:'지로나',g:3,p:2}]},
   mx:{name:'멕시코',flag:'🇲🇽',players:[
     {n:'S. 히메네스',pos:'FW',club:'AC 밀란',g:15,p:25},{n:'R. 히메네스',pos:'FW',club:'풀럼',g:28,p:18},
     {n:'C. 우에르타',pos:'FW',club:'안데를레흐트',g:5,p:12},{n:'A. 베가',pos:'MF',club:'톨루카',g:10,p:10},
@@ -266,6 +266,8 @@ const MATCHES = [
 ];
 const HBAND=['0~15분','16~30분','31~45분+']; /* 하프별 상대 시간 — TV 표기(전·후반 모두 0분부터) */
 const bandTxt=i=>i===-1?'무득점':(i<3?'전반 ':'후반 ')+HBAND[i%3];
+// 골 시간 표시 — band가 있으면 전반/후반 라벨, 없으면(구버전 골) 누적 분
+const goalTime=g=>g.band!=null?((g.band<3?'전반 ':'후반 ')+g.min+"'"):(g.min+"'");
 const CARDS=['0~2장','3~5장','6장 이상'];
 const AVATARS=['🦁','🐯','🐻','🦊','🐶','🐱','🐼','🐸','🐵','🦄','🐷','🐨'];
 const EMOJIS=['🦁','🐯','🐻','🦊','🐶','🐱','🐼','🐸','🐵','🦄','🐷','🐨','🐔','🐺','🦅','🦉','⚽','🔥','🚀','👑','🎯','😎','🤖','👻'];
@@ -375,6 +377,7 @@ const sb = DEMO_MODE ? demoClient() : supabase.createClient(SUPABASE_URL, SUPABA
 function blankLive(){return {on:false,goals:[],cards:0,half:null,finished:false,mvp:null};}
 let S = {participants:[],pin:null,tab:'m1',rankTab:'this',boardTab:'result',matches:{m1:{preds:{},locked:false,live:blankLive()},m2:{preds:{},locked:false,live:blankLive()},m3:{preds:{},locked:false,live:blankLive()}}};
 let LOADED=false, MODAL_OPEN=false, BUSY=false;
+let GOALHALF=1;   // 골 입력 다이얼로그에서 선택한 전반(1)/후반(2)
 let USER=sessionStorage.getItem('wc_user')||null;
 let ADMIN=sessionStorage.getItem('wc_admin')==='1';
 
@@ -426,7 +429,7 @@ async function refresh(){
   // 관전자: 새 골/카드면 토스트 직전 즉각 상황 이펙트
   if(mid!=='total'){
     const La=S.matches[mid].live, m=MATCHES.find(x=>x.id===mid);
-    if(La.goals.length>gBefore){const g=La.goals[La.goals.length-1];eventFlash('⚽','GOAL!',`${g.team==='kr'?'🇰🇷':TEAMS[m.opp].flag} ${esc(g.scorer)} ${g.min}'`);}
+    if(La.goals.length>gBefore){const g=La.goals[La.goals.length-1];eventFlash('⚽','GOAL!',`${g.team==='kr'?'🇰🇷':TEAMS[m.opp].flag} ${esc(g.scorer)} ${goalTime(g)}`);}
     else if(La.cards>cBefore)eventFlash('🟨','카드','+1장');
     else if(La.finished&&!fBefore)eventFlash('🏁','경기 종료','최종 채점!');
   }
@@ -453,7 +456,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh().
 function getFacts(M){
   const L=M.live, g=L.goals, f={};
   const fg=g[0];
-  if(fg){f.firstTeam=fg.team; f.firstBand=bandOf(fg.min);}
+  if(fg){f.firstTeam=fg.team; f.firstBand=fg.band!=null?fg.band:bandOf(fg.min);}
   else if(L.finished){f.firstTeam='none'; f.firstBand=-1;}
   const krg=g.filter(x=>x.team==='kr'), opg=g.filter(x=>x.team==='opp');
   if(krg[0]) f.krFirst=krg[0].scorer; else if(L.finished) f.krFirst='없음';
@@ -664,7 +667,7 @@ function liveCard(mid,m,O,M){
   }else{
     html+=`<div class="hint">어드민이 골·카드를 입력하면 자동으로 점수·순위에 반영됩니다.</div>`;
   }
-  html+=`<div style="margin-top:10px" class="evlog">${L.goals.map(g=>`⚽ ${g.min}' ${g.team==='kr'?'🇰🇷':O.flag} ${esc(g.scorer)}`).join('<br>')||'아직 이벤트 없음'} ${L.cards?`<br>🟨 카드 ${L.cards}장`:''}</div>
+  html+=`<div style="margin-top:10px" class="evlog">${L.goals.map(g=>`⚽ ${goalTime(g)} ${g.team==='kr'?'🇰🇷':O.flag} ${esc(g.scorer)}`).join('<br>')||'아직 이벤트 없음'} ${L.cards?`<br>🟨 카드 ${L.cards}장`:''}</div>
   </div>`;
   return html;
 }
@@ -674,7 +677,7 @@ function resultCard(mid,m,O,M){
   const r=krs>ops?'🇰🇷 대한민국 승리!':krs<ops?`${O.flag} ${O.name} 승`:'무승부';
   return `<div class="card"><h3>🏁 경기 결과</h3>
   <div style="font-size:15px;font-weight:800;margin-bottom:6px">${r} (${krs}:${ops})</div>
-  <div class="evlog">${L.goals.map(g=>`⚽ ${g.min}' ${g.team==='kr'?'🇰🇷':O.flag} ${esc(g.scorer)}`).join('<br>')||'득점 없음'}<br>🟨 카드 ${L.cards}장 · MVP: ${esc(L.mvp||'-')}</div>
+  <div class="evlog">${L.goals.map(g=>`⚽ ${goalTime(g)} ${g.team==='kr'?'🇰🇷':O.flag} ${esc(g.scorer)}`).join('<br>')||'득점 없음'}<br>🟨 카드 ${L.cards}장 · MVP: ${esc(L.mvp||'-')}</div>
   <button class="btn g w" onclick="copyResult('${mid}')">📋 결과 복사 (카톡 공유용)</button></div>`;
 }
 // 이 경기 순위 행들 (라이브 점수 반영 · FLIP 애니용 #lb)
@@ -1052,20 +1055,25 @@ function goalDlg(mid,team){
   if(!ADMIN)return adminGate(()=>goalDlg(mid,team));
   const m=MATCHES.find(x=>x.id===mid),O=TEAMS[m.opp];
   const T=team==='kr'?TEAMS.kr:O;
+  GOALHALF=S.matches[mid].live.half?2:1;   // 전반 종료됐으면 기본 후반
+  const hbtn=h=>`<button class="opt bl ${GOALHALF===h?'on':''}" onclick="setGoalHalf(${h})">${h===1?'전반':'후반'}</button>`;
   showModal(`<div class="card"><h3>⚽ ${T.flag} ${T.name} 골!</h3>
-    <div class="hint">득점자와 시간(분)을 입력하세요</div>
+    <div class="hint">득점자 · 전반/후반 · 그 하프에서의 분을 입력하세요</div>
     <select class="sel" id="g_scorer">${T.players.map(p=>`<option>${p.n}</option>`).join('')}<option>자책골/기타</option></select>
-    <div style="margin-top:8px"><input class="txtin" id="g_min" type="number" min="1" max="120" placeholder="몇 분? (예: 27)"></div>
+    <div class="opts c2" id="g_half" style="margin-top:8px">${hbtn(1)}${hbtn(2)}</div>
+    <div style="margin-top:8px"><input class="txtin" id="g_min" type="number" min="1" max="60" placeholder="그 하프에서 몇 분? (예: 13)"></div>
     <button class="btn p w" onclick="confirmGoal('${mid}','${team}')">골 기록!</button>
     <button class="btn g w" onclick="closeModal()">취소</button></div>`);
 }
+function setGoalHalf(h){GOALHALF=h;document.querySelectorAll('#g_half .opt').forEach((b,i)=>b.classList.toggle('on',i===h-1));}
 function confirmGoal(mid,team){
   const sc=$('#g_scorer').value, min=parseInt($('#g_min').value);
   if(!min||min<1){alert('시간(분)을 입력하세요');return;}
+  const band=(GOALHALF===2?3:0)+(min<=15?0:min<=30?1:2);   // 하프 + 그 안의 분 → 시간대
   closeModal();
   const gm=MATCHES.find(x=>x.id===mid);
-  eventFlash('⚽','GOAL!',`${team==='kr'?'🇰🇷':TEAMS[gm.opp].flag} ${esc(sc)} ${min}'`);
-  withDiff(mid,()=>{S.matches[mid].live.goals.push({team,scorer:sc,min});});
+  eventFlash('⚽','GOAL!',`${team==='kr'?'🇰🇷':TEAMS[gm.opp].flag} ${esc(sc)} ${band<3?'전반':'후반'} ${min}'`);
+  withDiff(mid,()=>{S.matches[mid].live.goals.push({team,scorer:sc,min,band});});
 }
 function finishDlg(mid){
   if(!ADMIN)return adminGate(()=>finishDlg(mid));
