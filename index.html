@@ -210,6 +210,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .reptl .tlmine{font-size:12px;line-height:1.45;color:var(--sub);margin-top:5px}  /* 내 예측 비교 — 보조 텍스트로 분리 */
 .reptl .tlmine.ok{color:var(--green)}
 .reptl .tlmine.no{color:var(--red)}
+.reptl .tlv.ok{color:var(--green)} .reptl .tlv.no{color:var(--red)}  /* 득점자별 적중/실패 색상 */
 .reptl b{font-weight:800;color:var(--txt)}
 .betdesc{margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
 .betdesc .bdt{font-size:12px;font-weight:800;margin-bottom:7px}
@@ -907,7 +908,7 @@ function showReport(mid,pid){
   const cl=assignClusters(mid)[pid]||clusterOf(d), p=d.p, f=d.f, name=gname(S.participants.find(x=>x.id===pid).name);
   const tmi=(mid==='m1'&&ANECDOTES_M1[name])?ANECDOTES_M1[name].split('{cl}').join(cl.n):null;
   const pct=d.total/300, grade=pct>=.62?'S':pct>=.48?'A':pct>=.36?'B':pct>=.24?'C':pct>=.12?'D':'F';  // 300점 만점은 사실상 불가 → 현실적 곡선으로 상향
-  const resHit=p.result===f.outcome, mvpHit=p.mvp===f.mvp;
+  const resHit=p.result===f.outcome, mvpHit=p.mvp===f.mvp, krHit=p.krFirst===f.krFirst, opHit=p.oppFirst===f.oppFirst;
   const lbl=l=>l==='상대 첫 득점자'?O.flag+' 첫 득점자':l;
   const res=v=>v===1?'🇰🇷 한국 승':v===0?'무승부':O.name+' 승';
   const ftTeam=v=>v==='kr'?'한국':v==='opp'?O.name:'무득점';
@@ -919,7 +920,7 @@ function showReport(mid,pid){
   const tl=[
     {fact:`경기는 <b>${f.kr}:${f.opp}</b>, ${f.outcome===1?'🇰🇷 한국 승리':f.outcome===-1?O.flag+' '+O.name+' 승':'무승부'}`, mine:`내 예측 ${res(p.result)}`, ok:resHit},
     {fact:`첫 골: <b>${ftTeam(f.firstTeam)}</b>이 <b>${bandTxt(f.firstBand)}</b>에 선제`, mine:`내 예측 ${bandTxt(p.band)}`, ok:p.band===f.firstBand},
-    {fact:`득점자: 🇰🇷 <b>${esc(f.krFirst)}</b> · ${O.flag} <b>${esc(f.oppFirst)}</b>`, mine:`내 예측 ${esc(p.krFirst)} / ${esc(p.oppFirst)}`, ok:null},
+    {fact:`득점자: 🇰🇷 <b>${esc(f.krFirst)}</b> · ${O.flag} <b>${esc(f.oppFirst)}</b>`, mine:`내 예측 <span class="tlv ${krHit?'ok':'no'}">${esc(p.krFirst)} ${krHit?'✅':'❌'}</span> · <span class="tlv ${opHit?'ok':'no'}">${esc(p.oppFirst)} ${opHit?'✅':'❌'}</span>`, ok:null},
     {fact:`MVP: <b>${f.mvp?esc(f.mvp):'발표 전'}</b>`, mine:`내 예측 ${esc(p.mvp)}`, ok:f.mvp?mvpHit:null}
   ].map(t=>{const mk=t.ok===true?'✅ ':t.ok===false?'❌ ':'',cls=t.ok===true?'ok':t.ok===false?'no':'';
     return `<div class="tlrow"><div class="tlfact">${t.fact}</div><div class="tlmine ${cls}">${mk}${t.mine}</div></div>`;}).join('');
@@ -943,7 +944,7 @@ function showReport(mid,pid){
     <div class="card repcard">
       <div class="repclu"><span class="ic">${cl.e}</span><div><div class="cn">${cl.n}</div><div class="cd">${cl.d}</div></div></div>
       <div class="repstat"><span>🏅 ${myRank}등 / ${N}명</span><span class="repgrade g${grade}">${grade}등급</span><span>${d.total} / 300점</span></div>
-      <div class="repverdict">🗣️ ${myRank}등 · ${grade}등급 — “${cl.n}” 다운 한 판이었어요.</div>
+      <div class="repverdict">🗣️ “${cl.n}” 다운 한 판이었어요.</div>
       <div class="repsec"><h3>🧭 배팅 성향</h3><div class="repp">${style}</div></div>
       ${tmi?`<div class="repsec"><h3>🎪 오늘의 장외 스토리</h3><div class="repp">${tmi}</div></div>`:''}
       <div class="repsec"><h3>🎬 무슨 일이 있었나</h3><div class="reptl">${tl}</div></div>
