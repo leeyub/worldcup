@@ -173,7 +173,6 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .betrow .brk{font-size:15px;font-weight:900;width:24px;text-align:center}
 .betrow .bnm{flex:1;font-weight:700;font-size:14px;min-width:0}
 .betrow .bamt{font-weight:900;font-size:15px;white-space:nowrap}
-.betrow .bbrk{width:100%;font-size:11px;color:var(--sub);padding-left:34px;margin-top:2px}
 .betrow.free{border-color:var(--green);background:rgba(52,211,153,.10)}
 .betrow.free .bamt{color:var(--green)}
 .betrow.most .bamt{color:var(--red)}
@@ -220,6 +219,11 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .betdesc .bdl:last-child{margin-bottom:0}
 .betdesc .bdl b{font-weight:800}
 .betdesc .bds{color:var(--sub)}
+.betdesc .bstep{display:flex;gap:7px;font-size:12px;line-height:1.55;color:var(--txt);margin-bottom:9px}
+.betdesc .bstep .bn{font-weight:800;flex-shrink:0}
+.betdesc .bstep .bc{flex:1;min-width:0}
+.betdesc .bstep .bdr{display:block;margin-top:3px}  /* 결과는 화살표로 줄바꿈, 윗줄 내용과 같은 들여쓰기 */
+.betdesc .bstep b{font-weight:800}
 .evlog{font-size:12px;color:var(--sub);line-height:1.9}
 #toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
 .toast{background:linear-gradient(135deg,rgba(37,99,235,.88),rgba(59,130,246,.80));color:#eff6ff;border:1px solid rgba(147,197,253,.45);padding:8px 16px;border-radius:99px;font-size:13px;font-weight:800;backdrop-filter:blur(8px) saturate(1.3);-webkit-backdrop-filter:blur(8px) saturate(1.3);box-shadow:0 6px 20px rgba(0,0,0,.18);animation:tin .3s, tout .4s 2.6s forwards}
@@ -820,15 +824,15 @@ function betCard(){
   const li=rows.map((r,i)=>{
     const top=ranks[i]===1, last=i===N-1;
     const face=top?'😎':last?'😭':'';
-    return `<div class="betrow ${top?'free':''} ${last?'most':''}" style="flex-wrap:wrap"><span class="brk">${top?'👑':ranks[i]}</span><span class="bnm">${avatarOf(r.p.id)} ${esc(gname(r.p.name))}</span><span class="bamt">${won(amt[i])}원 ${face}</span><span class="bbrk">상금 ${won(prize[i])}원 받음 · 점심 ${won(even)}+판돈 ${won(BET_STAKE)}−상금 ${won(prize[i])}</span></div>`;
+    return `<div class="betrow ${top?'free':''} ${last?'most':''}"><span class="brk">${top?'👑':ranks[i]}</span><span class="bnm">${avatarOf(r.p.id)} ${esc(gname(r.p.name))}</span><span class="bamt">${won(amt[i])}원 ${face}</span></div>`;
   }).join('');
   return `<div class="card"><h3>🍱 점심값 내기 <span class="pt">1인 ${won(gross)}원</span></h3>
     <div class="betdesc">
       <div class="bdt">💡 어떻게 계산했나요?</div>
-      <div class="bdl"><b>①</b> 각자 <b>점심 엔빵 ${won(even)}원</b> + <b>내기 판돈 ${won(BET_STAKE)}원</b> = 1인 <b>${won(gross)}원</b>씩</div>
-      <div class="bdl"><b>②</b> 모인 판돈 <b>${won(pool)}원</b>을 <b>순위 비례로 상금 분배</b> — 1등 <b>${won(prize[0])}원</b> … 꼴등 <b>${won(prize[N-1])}원</b></div>
-      <div class="bdl"><b>③</b> 최종 낼 돈 = ${won(gross)} − 받은 상금 → 1등 <b>${won(amt[0])}원</b> … 꼴등 <b>${won(amt[N-1])}원</b> <span class="bds">(합계 ${won(LUNCH_TOTAL)}원 = 점심값)</span></div>
-      <div class="bdl bds">※ 순위 비례 = 한 등수 위일수록 상금 일정액↑ · 동점은 같은 금액 · 100원 단위 · 현재 순위 기준</div>
+      <div class="bstep"><span class="bn">①</span><span class="bc">각자 <b>점심값 1/n ${won(even)}원</b> + <b>내기 판돈 ${won(BET_STAKE)}원</b><span class="bdr">→ 1인 <b>${won(gross)}원</b>씩</span></span></div>
+      <div class="bstep"><span class="bn">②</span><span class="bc">모인 판돈 <b>${won(pool)}원</b>을 <b>순위 비례로 상금 분배</b><span class="bdr">→ 1등 <b>${won(prize[0])}원</b> … 꼴등 <b>${won(prize[N-1])}원</b></span></span></div>
+      <div class="bstep"><span class="bn">③</span><span class="bc">최종 낼 돈 = 1인 ${won(gross)}원 − 받은 상금<span class="bdr">→ 1등 <b>${won(amt[0])}원</b> … 꼴등 <b>${won(amt[N-1])}원</b></span></span></div>
+      <div class="bdl bds">※ 합계는 ${won(LUNCH_TOTAL)}원(= 점심값) · 순위 비례 = 한 등수 위일수록 상금 일정액↑ · 동점은 같은 금액 · 100원 단위</div>
     </div>
     ${li}</div>`;
 }
