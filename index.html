@@ -167,6 +167,10 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .apred .apname{font-size:13px;font-weight:800;margin-bottom:6px}
 .apred .bd-it{font-size:12px;color:var(--sub);padding:3px 0;gap:12px}
 .apred .bd-it span:last-child{color:var(--txt);font-weight:600;text-align:right}
+.attrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.attrow:last-child{border-bottom:none}
+.attrow .atnm{flex:1;font-weight:700;font-size:14px;min-width:0}
+.attrow.out .atnm{opacity:.45;text-decoration:line-through}
 /* 점심값 내기 결과 */
 .betrow{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card2)}
 .betrow:last-of-type{margin-bottom:0}
@@ -362,7 +366,7 @@ const DEMO_PARTS=['이동엽','곽승표','김승현','김태현','민화빈','�
 const demoDB = {
   participants: DEMO_PARTS.slice(),
   settings:[{key:'admin_pin',value:'3535'}],
-  match_state:['m1','m2','m3'].map(id=>({match_id:id,locked:false,live:{on:false,goals:[],cards:0,half:null,finished:false,mvp:null}})),
+  match_state:['m1','m2','m3'].map(id=>({match_id:id,locked:false,live:{on:false,goals:[],cards:0,half:null,finished:false,mvp:null},absent:[]})),
   predictions:[]
 };
 function demoClient(){
@@ -454,7 +458,18 @@ function demoBar(){
 /* ================= STATE ================= */
 const sb = DEMO_MODE ? demoClient() : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 function blankLive(){return {on:false,goals:[],cards:0,half:null,finished:false,mvp:null};}
-let S = {participants:[],pin:null,tab:'m1',rankTab:'this',boardTab:'result',matches:{m1:{preds:{},locked:false,live:blankLive()},m2:{preds:{},locked:false,live:blankLive()},m3:{preds:{},locked:false,live:blankLive()}}};
+let S = {participants:[],pin:null,tab:'m1',rankTab:'this',boardTab:'result',matches:{m1:{preds:{},locked:false,live:blankLive(),absent:[]},m2:{preds:{},locked:false,live:blankLive(),absent:[]},m3:{preds:{},locked:false,live:blankLive(),absent:[]}}};
+// 경기별 참석자(미참석 opt-out): match_state.absent = 미참석 id 배열
+function attendees(mid){const ab=(S.matches[mid]&&S.matches[mid].absent)||[];return S.participants.filter(p=>!ab.includes(p.id));}
+function isAbsent(mid,pid){return ((S.matches[mid]&&S.matches[mid].absent)||[]).includes(pid);}
+async function toggleAttend(mid,pid){
+  if(!ADMIN)return adminGate(()=>toggleAttend(mid,pid));
+  const M=S.matches[mid]; M.absent=(M.absent||[]).slice();
+  const i=M.absent.indexOf(pid); if(i>=0)M.absent.splice(i,1); else M.absent.push(pid);
+  const {error}=await sb.from('match_state').update({absent:M.absent}).eq('match_id',mid);
+  if(error)err('저장 실패(absent 컬럼 추가 필요?): '+error.message);
+  adminPanel();
+}
 let LOADED=false, MODAL_OPEN=false, BUSY=false;
 let GOALHALF=1;   // 골 입력 다이얼로그에서 선택한 전반(1)/후반(2)
 let USER=sessionStorage.getItem('wc_user')||null;
@@ -479,6 +494,7 @@ async function fetchAll(){
     const row=ms.data.find(r=>r.match_id===m.id);
     S.matches[m.id].locked=row?row.locked:false;
     S.matches[m.id].live=row&&row.live?row.live:blankLive();
+    S.matches[m.id].absent=row&&row.absent?row.absent:[];
     S.matches[m.id].preds={};
   }
   for(const row of pd.data){
@@ -488,7 +504,7 @@ async function fetchAll(){
 }
 // 점수 변화 감지 후 새로고침 (토스트 + 순위 애니메이션)
 function liveSig(){
-  return JSON.stringify(MATCHES.map(mm=>{const M=S.matches[mm.id];return[M.locked,M.live,Object.keys(M.preds).sort().map(k=>k+JSON.stringify(M.preds[k]))];}))
+  return JSON.stringify(MATCHES.map(mm=>{const M=S.matches[mm.id];return[M.locked,M.live,M.absent,Object.keys(M.preds).sort().map(k=>k+JSON.stringify(M.preds[k]))];}))
     +JSON.stringify(S.participants.map(p=>p.id+p.name+(p.emoji||'')));
 }
 async function refresh(){
@@ -581,7 +597,7 @@ function totalOf(items){return items.reduce((s,i)=>s+i.pts,0)}
 function pendingOf(items){return items.filter(i=>i.state==='pend').reduce((s,i)=>s+i.max,0)}
 function matchScores(M,mid){
   const f=getFacts(M,mid), out={};
-  for(const pid in M.preds){const it=scorePred(M.preds[pid],f,mid);out[pid]={items:it,total:totalOf(it),pending:pendingOf(it)};}
+  for(const pid in M.preds){if(mid&&isAbsent(mid,pid))continue;const it=scorePred(M.preds[pid],f,mid);out[pid]={items:it,total:totalOf(it),pending:pendingOf(it)};}
   return out;
 }
 
@@ -614,6 +630,12 @@ function curMatchIdx(){const i=MATCHES.findIndex(m=>!S.matches[m.id].live.finish
 function liveNow(m,M){return M.live.on && (!m.kickoff || Date.now()>=new Date(m.kickoff).getTime());}
 function isSoon(m,j){const M=S.matches[m.id];return j>curMatchIdx()&&!M.locked&&!M.live.on&&!M.live.finished;}
 function dday(m){if(!m.kickoff)return 0;return Math.ceil((new Date(m.kickoff)-new Date())/86400000);}
+// ── 접근 기록(어드민 통계용) — 데모/5초 폴링 제외, 실제 사용자 행동만 ──
+function logEvent(kind,target){
+  if(DEMO_MODE)return;
+  try{sb.from('events').insert({viewer:USER||'anon',kind,target:target||null}).then(()=>{},()=>{});}catch(e){}
+}
+function setTab(mid){S.tab=mid;logEvent('tab',mid);render();}
 function renderTabs(){
   $('#tabs').innerHTML = MATCHES.map((m,j)=>{
     const M=S.matches[m.id], soon=isSoon(m,j);
@@ -676,12 +698,13 @@ function renderMatch(mid){
 
   // 실제 라이브 진행 중(킥오프 후)에만 참여자 카드 숨김 — 경기 집중. 마감/라이브 시작만으론 유지.
   if(!liveNow(m,M)){
-    html+=`<div class="card"><h3>👥 참여자 <span class="pt">${S.participants.length}명</span></h3>`;
-    if(!S.participants.length){
-      html+=`<span class="hint">아직 없음 — 어드민이 ⚙️에서 직원을 등록하세요</span>`;
+    const att=attendees(mid);
+    html+=`<div class="card"><h3>👥 참여자 <span class="pt">${att.length}명</span></h3>`;
+    if(!att.length){
+      html+=`<span class="hint">${S.participants.length?'이 경기 참석자가 없습니다 — 어드민(⚙️)에서 참석을 설정하세요':'아직 없음 — 어드민이 ⚙️에서 직원을 등록하세요'}</span>`;
     }else{
-      const doneList=S.participants.filter(p=>M.preds[p.id]);
-      const waitList=S.participants.filter(p=>!M.preds[p.id]);
+      const doneList=att.filter(p=>M.preds[p.id]);
+      const waitList=att.filter(p=>!M.preds[p.id]);
       const chip=(p,done)=>`<span class="chip ${done?'done':''}">${avatarOf(p.id)} ${esc(p.name)}${done?'<span class="ck">✓</span>':''}</span>`;
       if(doneList.length)html+=`<div class="pgroup"><div class="glabel">제출 완료 <span class="gn">${doneList.length}명</span></div><div class="chips">${doneList.map(p=>chip(p,true)).join('')}</div></div>`;
       if(waitList.length)html+=`<div class="pgroup"><div class="glabel">미제출 <span class="gn">${waitList.length}명</span> <span style="font-weight:600;font-style:italic">(판돈은 여러분께 기부!)</span></div><div class="chips">${waitList.map(p=>chip(p,false)).join('')}</div></div>`;
@@ -696,10 +719,10 @@ function renderMatch(mid){
         ?`<button class="btn ${M.preds[USER]?'g':'b'} w" style="padding:14px" onclick="openForm('${mid}','${USER}')">${avatarOf(USER)} ${esc(pname(USER))} — ${M.preds[USER]?'제출 완료 (수정하기)':'내 예측 입력하기'}</button>`
         :S.participants.length?`<button class="btn p w" style="padding:14px" onclick="empLoginDlg('${mid}')">직원 인증 후 로그인</button>`:'<div class="hint">먼저 어드민(⚙️)에서 직원을 등록하세요</div>'}
     </div>`;
-    const cnt=Object.keys(M.preds).length;
+    const att2=attendees(mid), cnt=att2.filter(p=>M.preds[p.id]).length;
     html+=`<div class="card"><h3>🔒 예측 마감 <span class="pt">어드민 전용</span></h3>
       <div class="hint">킥오프 직전에 어드민이 마감하세요.<br>마감하면 수정 불가, 전원의 예측이 공개됩니다.</div>
-      <button class="btn p w" ${cnt<1?'disabled':''} onclick="lockMatch('${mid}')">예측 마감하기 (${cnt}/${S.participants.length}명 제출)</button>
+      <button class="btn p w" ${cnt<1?'disabled':''} onclick="lockMatch('${mid}')">예측 마감하기 (${cnt}/${att2.length}명 제출)</button>
     </div>`;
     // 마감 전에도 결과(라이브) 입력 가능
     if(L.finished) html+=resultCard(mid,m,O,M);
@@ -713,7 +736,7 @@ function renderMatch(mid){
       html+=resultCard(mid,m,O,M);
       html+=rankingsCard(mid);
     }
-    html+=betCard();
+    html+=betCard(mid);
     html+=boardCard(mid,m,O,M);
     html+=commentsCard(mid,M);
     html+=rulesCard();   // 마감(진행 중·종료) 후에도 항목별 배점을 친구들이 조회 가능
@@ -796,9 +819,9 @@ function totalRows(){
   S.participants.forEach(p=>totals[p.id]={t:0,per:[]});
   MATCHES.forEach(m=>{
     const sc=matchScores(S.matches[m.id],m.id);
-    S.participants.forEach(p=>{const v=sc[p.id]?sc[p.id].total:null;totals[p.id].per.push(v);totals[p.id].t+=v||0;});
+    S.participants.forEach(p=>{const ab=isAbsent(m.id,p.id);const v=ab?null:(sc[p.id]?sc[p.id].total:null);totals[p.id].per.push(ab?'x':v);totals[p.id].t+=(v||0);});
   });
-  const rows=S.participants.map(p=>({p,...totals[p.id]})).sort((a,b)=>b.t-a.t);
+  const rows=S.participants.filter(p=>MATCHES.some(m=>!isAbsent(m.id,p.id))).map(p=>({p,...totals[p.id]})).sort((a,b)=>b.t-a.t);
   if(!rows.length)return '<div class="hint" style="margin:0">참여자가 없습니다</div>';
   const ranks=tieRanks(rows.map(r=>r.t));
   return `<div class="lb">${rows.map((r,i)=>{
@@ -808,7 +831,7 @@ function totalRows(){
       <span class="rk">${top?'👑':ranks[i]}</span>
       <span class="nm">${avatarOf(r.p.id)} ${esc(gname(r.p.name))}${r.p.id===USER?' <span class="tag">나</span>':''} ${last?'<span class="tag">🍗 치킨</span>':''}</span>
       <span class="pts">${r.t}점</span>
-      <div class="permatch">${r.per.map((v,j)=>`<span>${j+1}차 <b>${v===null?'-':v}</b></span>`).join('')}</div>
+      <div class="permatch">${r.per.map((v,j)=>`<span>${j+1}차 <b>${v==='x'?'·':v===null?'-':v}</b></span>`).join('')}</div>
     </div>`;
   }).join('')}</div>`;
 }
@@ -816,11 +839,9 @@ function totalRows(){
 const LUNCH_TOTAL=196000; // 점심값(전원 엔빵 대상)
 const BET_STAKE=9000;     // 1인당 내기 판돈 — 모아서 상금풀, 순위 비례로 분배
 function won(n){return n.toLocaleString('ko-KR');}
-function betSplit(){
-  const totals={};
-  S.participants.forEach(p=>totals[p.id]=0);
-  MATCHES.forEach(m=>{const sc=matchScores(S.matches[m.id],m.id);S.participants.forEach(p=>{totals[p.id]+=sc[p.id]?sc[p.id].total:0;});});
-  const rows=S.participants.map(p=>({p,t:totals[p.id]})).sort((a,b)=>b.t-a.t);
+function betSplit(mid){
+  const sc=matchScores(S.matches[mid],mid);
+  const rows=attendees(mid).map(p=>({p,t:sc[p.id]?sc[p.id].total:0})).sort((a,b)=>b.t-a.t);
   const N=rows.length;
   if(N<2)return null;
   const even=Math.round(LUNCH_TOTAL/N);       // 점심값 엔빵 1인분
@@ -838,9 +859,9 @@ function betSplit(){
   prize[N-1]=gross-amt[N-1];                      // 꼴등 표시 일관성(점심+판돈-상금=최종)
   return {rows,amt,prize,even,gross,pool};
 }
-function betCard(){
-  if(!MATCHES.some(m=>S.matches[m.id].live.finished))return ''; // 한 경기라도 끝나야 표시
-  const b=betSplit(); if(!b)return '';
+function betCard(mid){
+  if(!S.matches[mid].live.finished)return ''; // 이 경기가 끝나야 표시
+  const b=betSplit(mid); if(!b)return '';
   const {rows,amt,even}=b;
   const ranks=tieRanks(rows.map(r=>r.t));
   const N=rows.length;
@@ -918,7 +939,7 @@ function clusterOf(d){return clusterCandidates(d)[0];}
 // 같은 경기 참여자끼리 별명이 겹치지 않도록 유니크 배정 (점수 높은 순으로 우선 선점)
 function assignClusters(mid){
   const M=S.matches[mid], sc=matchScores(M,mid);
-  const order=S.participants.filter(p=>M.preds[p.id])
+  const order=S.participants.filter(p=>M.preds[p.id]&&!isAbsent(mid,p.id))
     .map(p=>({pid:p.id,t:sc[p.id]?sc[p.id].total:0,cand:clusterCandidates(reportData(p.id,mid))}))
     .sort((a,b)=>b.t-a.t);
   const used=new Set(),out={};
@@ -972,7 +993,7 @@ function showReport(mid,pid){
   const M=S.matches[mid],m=MATCHES.find(x=>x.id===mid),O=TEAMS[m.opp];
   const d=reportData(pid,mid); if(!d)return;
   const sc=matchScores(M,mid);
-  const order=S.participants.filter(x=>M.preds[x.id]).map(x=>({id:x.id,t:sc[x.id].total})).sort((a,b)=>b.t-a.t);
+  const order=S.participants.filter(x=>M.preds[x.id]&&!isAbsent(mid,x.id)).map(x=>({id:x.id,t:sc[x.id].total})).sort((a,b)=>b.t-a.t);
   const ranks=tieRanks(order.map(o=>o.t)), myRank=ranks[order.findIndex(o=>o.id===pid)], N=order.length;
   const cl=assignClusters(mid)[pid]||clusterOf(d), p=d.p, f=d.f, name=gname(S.participants.find(x=>x.id===pid).name);
   const tmi=(mid==='m1'&&ANECDOTES_M1[name])?ANECDOTES_M1[name].split('{cl}').join(cl.n):null;
@@ -1169,6 +1190,19 @@ function adminPredsCard(){
     <div class="hint">마감 전에도 어드민은 각자 제출 내용을 볼 수 있어요.</div>
     <div class="btabs">${tabs}</div>${body}</div>`;
 }
+// 어드민: 경기별 참석/미참석 관리
+function attendCard(){
+  const mid=(S.adminAttendTab&&S.matches[S.adminAttendTab])?S.adminAttendTab:(S.tab||'m1');
+  const M=S.matches[mid], absent=M.absent||[], cnt=S.participants.length-absent.length;
+  const tabs=MATCHES.map(mm=>`<button class="btab ${mm.id===mid?'on':''}" onclick="S.adminAttendTab='${mm.id}';adminPanel()">${mm.label}</button>`).join('');
+  const rows=S.participants.length?S.participants.map(p=>{
+    const out=absent.includes(p.id);
+    return `<div class="attrow ${out?'out':''}"><span class="atnm">${avatarOf(p.id)} ${esc(p.name)}</span><button class="btn ${out?'g':'b'}" style="padding:6px 12px;font-size:12px;flex:0 0 auto" onclick="toggleAttend('${mid}','${p.id}')">${out?'미참석':'참석'}</button></div>`;
+  }).join(''):`<div class="hint" style="margin:0">먼저 직원을 등록하세요</div>`;
+  return `<div class="card"><h3>🙋 경기별 참석 <span class="pt">${cnt}/${S.participants.length}명</span></h3>
+    <div class="hint">이 경기에 참석 안 하는 사람은 '미참석'으로 — 미제출 목록·정산에서 빠집니다.</div>
+    <div class="btabs">${tabs}</div>${rows}</div>`;
+}
 function adminPanel(){
   if(!ADMIN)return adminGate(adminPanel);
   showModal(`<div class="mbar"><button class="btn g" onclick="closeModal();render()">✕</button><h2>⚙️ 어드민 관리</h2></div>
@@ -1185,6 +1219,7 @@ function adminPanel(){
       <button class="btn b" style="flex:0 0 auto" onclick="addPart()">등록</button>
     </div>
   </div>
+  ${attendCard()}
   ${adminPredsCard()}
   <div class="card"><h3>🔑 어드민 비밀번호 변경</h3>
     <div class="hint">초기 비밀번호(3535)는 꼭 변경하세요!</div>
