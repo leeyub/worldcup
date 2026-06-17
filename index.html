@@ -334,6 +334,7 @@ const MATCHES = [
   {id:'m2',opp:'mx',label:'2차전',date:'6/18 (목) 10:00',venue:'과달라하라',kickoff:'2026-06-18T10:00'},
   {id:'m3',opp:'za',label:'3차전',date:'6/25 (목) 10:00',venue:'몬테레이',kickoff:'2026-06-25T10:00'}
 ];
+const HOME_TAB='m2'; // 앱 진입 시 기본 노출 경기 — 자동 이동 안 함, 오너가 명시 요청 시에만 변경
 const HBAND=['0~15분','16~30분','31~45분+']; /* 하프별 상대 시간 — TV 표기(전·후반 모두 0분부터) */
 const bandTxt=i=>i===-1?'무득점':(i<3?'전반 ':'후반 ')+HBAND[i%3];
 // 골 시간 표시 — band가 있으면 전반/후반 라벨, 없으면(구버전 골) 누적 분
@@ -707,7 +708,7 @@ function renderMatch(mid){
       const waitList=att.filter(p=>!M.preds[p.id]);
       const chip=(p,done)=>`<span class="chip ${done?'done':''}">${avatarOf(p.id)} ${esc(p.name)}${done?'<span class="ck">✓</span>':''}</span>`;
       if(doneList.length)html+=`<div class="pgroup"><div class="glabel">제출 완료 <span class="gn">${doneList.length}명</span></div><div class="chips">${doneList.map(p=>chip(p,true)).join('')}</div></div>`;
-      if(waitList.length)html+=`<div class="pgroup"><div class="glabel">미제출 <span class="gn">${waitList.length}명</span> <span style="font-weight:600;font-style:italic">(판돈은 여러분께 기부!)</span></div><div class="chips">${waitList.map(p=>chip(p,false)).join('')}</div></div>`;
+      if(waitList.length)html+=`<div class="pgroup"><div class="glabel">미제출 <span class="gn">${waitList.length}명</span></div><div class="chips">${waitList.map(p=>chip(p,false)).join('')}</div></div>`;
     }
     html+=`</div>`;
   }
@@ -1582,7 +1583,7 @@ syncThemeBtn();
     return;
   }
   if(SUPABASE_URL.includes('붙여넣기')){err('아직 설정 전입니다 — index.html 상단의 SUPABASE_URL과 SUPABASE_ANON_KEY를 입력하세요 (설치가이드 참고)');return;}
-  try{await fetchAll();S.tab=MATCHES[curMatchIdx()].id;render();} // 진행 중인 경기로 진입
+  try{await fetchAll();S.tab=S.matches[HOME_TAB]?HOME_TAB:'m1';render();} // 기본 노출 경기(고정)
   catch(e){console.error(e);}
 })();
 </script>
