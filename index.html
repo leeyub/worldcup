@@ -468,7 +468,7 @@ async function toggleAttend(mid,pid){
   const i=M.absent.indexOf(pid); if(i>=0)M.absent.splice(i,1); else M.absent.push(pid);
   const {error}=await sb.from('match_state').update({absent:M.absent}).eq('match_id',mid);
   if(error)err('저장 실패(absent 컬럼 추가 필요?): '+error.message);
-  const y=$('#modal').scrollTop; adminPanel(); $('#modal').scrollTop=y; // 스크롤 위치 유지
+  adminRerender();
 }
 let LOADED=false, MODAL_OPEN=false, BUSY=false;
 let GOALHALF=1;   // 골 입력 다이얼로그에서 선택한 전반(1)/후반(2)
@@ -1177,7 +1177,7 @@ function adminPredsCard(){
   const mid=(S.adminPredTab&&S.matches[S.adminPredTab])?S.adminPredTab:(S.tab||'m1');
   const m=MATCHES.find(x=>x.id===mid),O=TEAMS[m.opp],M=S.matches[mid];
   const subs=S.participants.filter(p=>M.preds[p.id]);
-  const tabs=MATCHES.map(mm=>`<button class="btab ${mm.id===mid?'on':''}" onclick="S.adminPredTab='${mm.id}';adminPanel()">${mm.label}</button>`).join('');
+  const tabs=MATCHES.map(mm=>`<button class="btab ${mm.id===mid?'on':''}" onclick="S.adminPredTab='${mm.id}';adminRerender()">${mm.label}</button>`).join('');
   let body;
   if(!subs.length) body=`<div class="hint" style="margin:0">아직 제출한 참여자가 없어요</div>`;
   else body=subs.map(p=>{
@@ -1194,7 +1194,7 @@ function adminPredsCard(){
 function attendCard(){
   const mid=(S.adminAttendTab&&S.matches[S.adminAttendTab])?S.adminAttendTab:(S.tab||'m1');
   const M=S.matches[mid], absent=M.absent||[], cnt=S.participants.length-absent.length;
-  const tabs=MATCHES.map(mm=>`<button class="btab ${mm.id===mid?'on':''}" onclick="S.adminAttendTab='${mm.id}';adminPanel()">${mm.label}</button>`).join('');
+  const tabs=MATCHES.map(mm=>`<button class="btab ${mm.id===mid?'on':''}" onclick="S.adminAttendTab='${mm.id}';adminRerender()">${mm.label}</button>`).join('');
   const rows=S.participants.length?S.participants.map(p=>{
     const out=absent.includes(p.id);
     return `<div class="attrow ${out?'out':''}"><span class="atnm">${avatarOf(p.id)} ${esc(p.name)}</span><button class="btn ${out?'g':'b'}" style="padding:6px 12px;font-size:12px;flex:0 0 auto" onclick="toggleAttend('${mid}','${p.id}')">${out?'미참석':'참석'}</button></div>`;
@@ -1203,6 +1203,8 @@ function attendCard(){
     <div class="hint">이 경기에 참석 안 하는 사람은 '미참석'으로 — 미제출 목록·정산에서 빠집니다.</div>
     <div class="btabs">${tabs}</div>${rows}</div>`;
 }
+// 어드민 모달을 다시 그리되 스크롤 위치 유지 (탭 전환·토글 등 내부 버튼용)
+function adminRerender(){const y=$('#modal')?$('#modal').scrollTop:0;adminPanel();if($('#modal'))$('#modal').scrollTop=y;}
 function adminPanel(){
   if(!ADMIN)return adminGate(adminPanel);
   showModal(`<div class="mbar"><button class="btn g" onclick="closeModal();render()">✕</button><h2>⚙️ 어드민 관리</h2></div>
@@ -1252,7 +1254,7 @@ async function addPart(){
   // 이미 끝난 경기는 신규 등록자를 기본 '미참석'으로 (지난 경기에 끼지 않게)
   const np=S.participants.find(p=>p.name===n&&p.emp===e);
   if(np)for(const mm of MATCHES){const M=S.matches[mm.id];if(M.live.finished&&!(M.absent||[]).includes(np.id)){M.absent=(M.absent||[]).concat(np.id);await sb.from('match_state').update({absent:M.absent}).eq('match_id',mm.id);}}
-  adminPanel();toast('등록 완료!');
+  adminRerender();toast('등록 완료!');
 }
 function editPart(pid){
   const p=S.participants.find(x=>x.id===pid);
@@ -1281,7 +1283,7 @@ async function delPart(pid){
   if(!confirm(pname(pid)+' 님을 삭제할까요? 모든 예측도 삭제됩니다.'))return;
   const {error}=await sb.from('participants').delete().eq('id',pid);
   if(error){alert('삭제 실패: '+error.message);return;}
-  await fetchAll();adminPanel();render();
+  await fetchAll();adminRerender();render();
 }
 async function resetAll(){
   if(!confirm('모든 예측과 경기 기록이 삭제됩니다 (직원 명단은 유지). 초기화할까요?'))return;
