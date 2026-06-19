@@ -1162,16 +1162,15 @@ function showReport(mid,pid){
       <div class="repsec"><h3>✨ 신의 한 수</h3>
         ${hits.length?hits.slice(0,4).map(it=>{
           const part=it.pts<it.max;
-          // 부분점수면 "왜 부분인지"를 쉬운 말로
-          let why2='';
+          // 배지에 적중 종류를 직접 표기(부분점수는 구체 사유), 아래 보조텍스트는 '내 예측'만 간소하게
+          let badgeText='정확히 적중';
           if(part){
-            if(it.label==='최종 스코어') why2 = it.pts>=30 ? '승부 결과만 적중 (스코어는 빗나감)' : (p.kr===f.kr?'한국':O.name)+' 득점 수만 적중';
-            else if(it.label==='첫 골 시간대') why2='인접 시간대 적중 (한 칸 차이)';
-            else if(it.label==='카드 수') why2='인접 개수 적중 (한 장 차이)';
-            else why2='부분 적중';
+            if(it.label==='최종 스코어') badgeText = it.pts>=30 ? '승부 결과 적중' : (p.kr===f.kr?'한국':O.name)+' 득점 적중';
+            else if(it.label==='첫 골 시간대') badgeText='인접 시간 적중';
+            else if(it.label==='카드 수') badgeText='인접 개수 적중';
+            else badgeText='부분 적중';
           }
-          const badge=part?'<span class="rhtag part">부분점수 획득</span>':'<span class="rhtag full">정확히 적중</span>';
-          return `<div class="rephit"><div class="rhmain"><div class="rhlbl">${lbl(it.label)} ${badge}</div><div class="rhmine">내 예측 ${esc(String(it.yours))}${why2?` · ${why2}`:''}</div></div><span class="hp">+${it.pts}점${part?`<span class="hpmax"> /${it.max}</span>`:''}</span></div>`;
+          return `<div class="rephit"><div class="rhmain"><div class="rhlbl">${lbl(it.label)} <span class="rhtag ${part?'part':'full'}">${badgeText}</span></div><div class="rhmine">내 예측 ${esc(String(it.yours))}</div></div><span class="hp">+${it.pts}점${part?`<span class="hpmax"> /${it.max}</span>`:''}</span></div>`;
         }).join(''):'<div class="repp dim">…이번엔 빈손이었어요 😇</div>'}
       </div>
       <div class="repsec"><h3>💥 패착 분석</h3>
