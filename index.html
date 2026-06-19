@@ -1126,10 +1126,10 @@ function showReport(mid,pid){
     : `예측이 실제 흐름과 제법 맞아떨어진 차분한 한 판이었어요.`;
   const style=`${esc(name)}님은 <b>${lean}</b>이자 <b>${aggr}</b> 베터예요. ${drew} ${contrast}`;
   const tl=[
-    {fact:`경기는 <b>${f.kr}:${f.opp}</b>, ${f.outcome===1?'🇰🇷 한국 승리':f.outcome===-1?O.flag+' '+O.name+' 승':'무승부'}`, mine:`내 예측 ${res(p.result)}`, ok:resHit},
-    {fact:`첫 골: <b>${ftTeam(f.firstTeam)}</b>${iGa(ftTeam(f.firstTeam))} <b>${bandTxt(f.firstBand)}</b>에 선제`, mine:`내 예측 ${bandTxt(p.band)}`, ok:p.band===f.firstBand},
-    {fact:`득점자: 🇰🇷 <b>${esc(f.krFirst)}</b> · ${O.flag} <b>${esc(f.oppFirst)}</b>`, mine:`내 예측 <span class="tlv ${krHit?'ok':'no'}">${esc(p.krFirst)} ${krHit?'✅':'❌'}</span> · <span class="tlv ${opHit?'ok':'no'}">${esc(p.oppFirst)} ${opHit?'✅':'❌'}</span>`, ok:null, cls:(krHit&&opHit)?'ok':(!krHit&&!opHit)?'no':'mix'},
-    {fact:`MVP: <b>${f.mvp?esc(f.mvp):'발표 전'}</b>`, mine:`내 예측 ${esc(p.mvp)}`, ok:f.mvp?mvpHit:null}
+    {fact:`경기는 <b>${f.kr}:${f.opp}</b>, ${f.outcome===1?'🇰🇷 한국 승리':f.outcome===-1?O.flag+' '+O.name+' 승':'무승부'}`, mine:`내 예측 : ${res(p.result)}`, ok:resHit},
+    {fact:`첫 골: <b>${ftTeam(f.firstTeam)}</b>${iGa(ftTeam(f.firstTeam))} <b>${bandTxt(f.firstBand)}</b>에 선제`, mine:`내 예측 : ${bandTxt(p.band)}`, ok:p.band===f.firstBand},
+    {fact:`득점자: 🇰🇷 <b>${esc(f.krFirst)}</b> · ${O.flag} <b>${esc(f.oppFirst)}</b>`, mine:`내 예측 : <span class="tlv ${krHit?'ok':'no'}">${esc(p.krFirst)} ${krHit?'✅':'❌'}</span> · <span class="tlv ${opHit?'ok':'no'}">${esc(p.oppFirst)} ${opHit?'✅':'❌'}</span>`, ok:null, cls:(krHit&&opHit)?'ok':(!krHit&&!opHit)?'no':'mix'},
+    {fact:`MVP: <b>${f.mvp?esc(f.mvp):'발표 전'}</b>`, mine:`내 예측 : ${esc(p.mvp)}`, ok:f.mvp?mvpHit:null}
   ].map(t=>{const mk=t.ok===true?'✅ ':t.ok===false?'❌ ':'',cls=t.cls!==undefined?t.cls:(t.ok===true?'ok':t.ok===false?'no':'');
     return `<div class="tlrow"><div class="tlfact">${t.fact}</div><div class="tlmine ${cls}">${mk}${t.mine}</div></div>`;}).join('');
   const scorerWhy=(pick,actual,who)=>pick==='없음'
@@ -1171,11 +1171,11 @@ function showReport(mid,pid){
             else if(it.label==='카드 수') badgeText='인접 개수 적중';
             else badgeText='부분 적중';
           }
-          return `<div class="rephit"><div class="rhmain"><div class="rhlbl">${lbl(it.label)} <span class="rhtag ${part?'part':'full'}">${badgeText}</span></div><div class="rhmine">내 예측 ${esc(String(it.yours))}</div></div><span class="hp">+${it.pts}점</span></div>`;
+          return `<div class="rephit"><div class="rhmain"><div class="rhlbl">${lbl(it.label)} <span class="rhtag ${part?'part':'full'}">${badgeText}</span></div><div class="rhmine">내 예측 : ${esc(String(it.yours))}</div></div><span class="hp">+${it.pts}점</span></div>`;
         }).join(''):'<div class="repp dim">…이번엔 빈손이었어요 😇</div>'}
       </div>
       <div class="repsec"><h3>💥 패착 분석</h3>
-        ${misses.length?misses.slice(0,4).map(it=>`<div class="repmiss"><div class="rmlbl">${lbl(it.label)} <span class="rmpt">-${it.max}점</span></div><div class="rmvs">${why[it.label]||('내 예측 <b>'+esc(String(it.yours))+'</b> → 실제 <b>'+esc(String(it.actual))+'</b>')}</div></div>`).join(''):'<div class="repp dim">완벽했어요! 흠잡을 데가 없네요 🎉</div>'}
+        ${misses.length?misses.slice(0,4).map(it=>`<div class="repmiss"><div class="rmlbl">${lbl(it.label)} <span class="rmpt">-${it.max}점</span></div><div class="rmvs">${why[it.label]||('내 예측 : <b>'+esc(String(it.yours))+'</b> → 실제 <b>'+esc(String(it.actual))+'</b>')}</div></div>`).join(''):'<div class="repp dim">완벽했어요! 흠잡을 데가 없네요 🎉</div>'}
       </div>
       <div class="repsec"><h3>🔮 다음 판 조언</h3><div class="repp">${advice}</div></div>
     </div>`,true);
