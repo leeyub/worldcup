@@ -1128,9 +1128,9 @@ function showReport(mid,pid){
   const tl=[
     {fact:`경기는 <b>${f.kr}:${f.opp}</b>, ${f.outcome===1?'🇰🇷 한국 승리':f.outcome===-1?O.flag+' '+O.name+' 승':'무승부'}`, mine:`내 예측 : ${res(p.result)}`, ok:resHit},
     {fact:`첫 골: <b>${ftTeam(f.firstTeam)}</b>${iGa(ftTeam(f.firstTeam))} <b>${bandTxt(f.firstBand)}</b>에 선제`, mine:`내 예측 : ${bandTxt(p.band)}`, ok:p.band===f.firstBand},
-    {fact:`득점자: 🇰🇷 <b>${esc(f.krFirst)}</b> · ${O.flag} <b>${esc(f.oppFirst)}</b>`, mine:`내 예측 : <span class="tlv ${krHit?'ok':'no'}">${esc(p.krFirst)} ${krHit?'✅':'❌'}</span> · <span class="tlv ${opHit?'ok':'no'}">${esc(p.oppFirst)} ${opHit?'✅':'❌'}</span>`, ok:null, cls:(krHit&&opHit)?'ok':(!krHit&&!opHit)?'no':'mix'},
+    {fact:`득점자: 🇰🇷 <b>${esc(f.krFirst)}</b> · ${O.flag} <b>${esc(f.oppFirst)}</b>`, mine:`내 예측 : <span class="tlv ${krHit?'ok':'no'}">${esc(p.krFirst)}${krHit?' ✅':''}</span> · <span class="tlv ${opHit?'ok':'no'}">${esc(p.oppFirst)}${opHit?' ✅':''}</span>`, ok:null, cls:(krHit&&opHit)?'ok':(!krHit&&!opHit)?'no':'mix'},
     {fact:`MVP: <b>${f.mvp?esc(f.mvp):'발표 전'}</b>`, mine:`내 예측 : ${esc(p.mvp)}`, ok:f.mvp?mvpHit:null}
-  ].map(t=>{const mk=t.ok===true?'✅ ':t.ok===false?'❌ ':'',cls=t.cls!==undefined?t.cls:(t.ok===true?'ok':t.ok===false?'no':'');
+  ].map(t=>{const mk=t.ok===true?'✅ ':'',cls=t.cls!==undefined?t.cls:(t.ok===true?'ok':t.ok===false?'no':'');
     return `<div class="tlrow"><div class="tlfact">${t.fact}</div><div class="tlmine ${cls}">${mk}${t.mine}</div></div>`;}).join('');
   const scorerWhy=(pick,actual,who)=>pick==='없음'
     ? `${who} 무득점을 점쳤지만 결국 골이 터졌고, 그 주인공은 <b>${esc(actual)}</b>${ieot(actual)}어요${actualNote(actual,O)}.`
