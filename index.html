@@ -1012,16 +1012,16 @@ function pickRisk(nm,O){
   const pl=playerOf(nm,O);
   if(!pl)return '오늘 흐름과는 어긋난 선택';
   if(pl.pos==='DF')return '수비수라 첫 득점자로는 거의 복권에 가까운 픽';
-  if(pl.pos==='GK')return '골키퍼를 첫 득점자로… 낭만은 인정';
+  if(pl.pos==='GK')return '골키퍼를 첫 득점자로 본 낭만적인 픽';
   if(pl.p<=8)return `득점 확률 ${pl.p}%의 모험수`;
-  if(pl.p>=20)return `득점 확률 ${pl.p}%로 합리적이었지만 오늘 첫 골 주인공은 아니었죠`;
+  if(pl.p>=20)return `득점 확률 ${pl.p}%로 합리적인 선택`;
   return '나쁘지 않았지만 오늘 그림과는 살짝 빗나간 카드';
 }
 function actualNote(nm,O){  // 실제 득점자가 왜 의외였나 (데이터 기반)
   const pl=playerOf(nm,O); if(!pl)return '';
   if(pl.pos==='DF')return ' — 수비수의 골이라 1순위로 적기 어려운 깜짝 골이었죠';
   if(pl.pos==='GK')return ' — 골키퍼 득점이라니!';
-  if(pl.p<=6)return ` — 득점 확률 ${pl.p}%의 다크호스`;
+  if(pl.p<=6)return ` — 득점 확률 ${pl.p}%의 다크호스였죠`;
   return '';
 }
 function showReport(mid,pid){
@@ -1039,7 +1039,7 @@ function showReport(mid,pid){
   const ftTeam=v=>v==='kr'?'한국':v==='opp'?O.name:'무득점';
   // 한글 조사 자동 선택 (받침 유무로 이/가·이라/라·이었/였·으로/로)
   const _jong=w=>{const s=String(w).replace(/[^가-힣]/g,'');return s?((s.charCodeAt(s.length-1)-0xAC00)%28!==0):false;};
-  const iGa=w=>_jong(w)?'이':'가', iRa=w=>_jong(w)?'이라':'라', ieot=w=>_jong(w)?'이었':'였';
+  const iGa=w=>_jong(w)?'이':'가', iRa=w=>_jong(w)?'이라':'라', ieot=w=>_jong(w)?'이었':'였', eun=w=>_jong(w)?'은':'는', eul=w=>_jong(w)?'을':'를';
   const euRo=w=>{const s=String(w).replace(/[^가-힣]/g,'');if(!s)return'로';const j=(s.charCodeAt(s.length-1)-0xAC00)%28;return(j===0||j===8)?'로':'으로';};
   const hits=d.items.filter(it=>it.state==='hit').sort((a,b)=>b.pts-a.pts);
   const misses=d.items.filter(it=>it.state==='miss').sort((a,b)=>b.max-a.max);
@@ -1054,18 +1054,18 @@ function showReport(mid,pid){
   ].map(t=>{const mk=t.ok===true?'✅ ':t.ok===false?'❌ ':'',cls=t.cls!==undefined?t.cls:(t.ok===true?'ok':t.ok===false?'no':'');
     return `<div class="tlrow"><div class="tlfact">${t.fact}</div><div class="tlmine ${cls}">${mk}${t.mine}</div></div>`;}).join('');
   const scorerWhy=(pick,actual,who)=>pick==='없음'
-    ? `${who} 무득점에 걸었지만 결국 골이 터졌고, 주인공은 <b>${esc(actual)}</b>${ieot(actual)}죠${actualNote(actual,O)}.`
-    : `<b>${esc(pick)}</b> 카드였지만, ${pickRisk(pick,O)}. 실제 ${who} 선제골은 <b>${esc(actual)}</b>${actualNote(actual,O)}.`;
+    ? `${who} 무득점을 점쳤지만 결국 골이 터졌고, 그 주인공은 <b>${esc(actual)}</b>${ieot(actual)}어요${actualNote(actual,O)}.`
+    : `<b>${esc(pick)}</b>${eun(pick)} ${pickRisk(pick,O)}${ieot(pickRisk(pick,O))}지만, 막상 ${who} 첫 골은 <b>${esc(actual)}</b>의 몫이었죠${actualNote(actual,O)}.`;
   const why={
-    '경기 결과':`승부의 방향부터 어긋났어요. ${res(p.result)}${iRa(res(p.result))} 믿었지만 경기는 ${res(f.outcome)}. 여기서 60점이 통째로…`,
-    '최종 스코어':`${p.kr}:${p.opp} vs 실제 <b>${f.kr}:${f.opp}</b>. 스코어는 디테일의 영역, 한 끗이 곧 점수죠.`,
+    '경기 결과':`승부의 방향부터 어긋났어요. ${res(p.result)}${iRa(res(p.result))} 믿었지만 결과는 ${res(f.outcome)}, 여기서 60점이 통째로 날아갔죠.`,
+    '최종 스코어':`스코어를 ${p.kr}:${p.opp}로 봤지만 뚜껑을 열어보니 <b>${f.kr}:${f.opp}</b>! 스코어는 디테일 싸움이라 한 끗이 곧 점수랍니다.`,
     '🇰🇷 첫 득점자':scorerWhy(p.krFirst,f.krFirst,'한국'),
     '상대 첫 득점자':scorerWhy(p.oppFirst,f.oppFirst,O.name),
-    '첫 골 팀':`첫 골은 ${ftTeam(p.firstTeam)}${iGa(ftTeam(p.firstTeam))} 넣을 줄 알았지만, <b>${ftTeam(f.firstTeam)}</b>${iGa(ftTeam(f.firstTeam))} 먼저 골망을 흔들었죠.`,
-    '첫 골 시간대':`타이밍을 ${bandTxt(p.band)}${euRo(bandTxt(p.band))} 봤는데 실제론 <b>${bandTxt(f.firstBand)}</b>. 시계가 살짝 빗나감.`,
-    '전반전 결과':`전반을 ${res(p.half)}로 봤지만 실제 전반은 <b>${res(f.half)}</b>.`,
-    '카드 수':`카드 ${cardLab(mid,p.cards)} 예상 → 실제 <b>${cardLab(mid,f.cards)}</b>.`,
-    'MVP':`MVP로 <b>${esc(p.mvp)}</b>를 점찍었지만, 오늘 MVP의 영광은 <b>${esc(f.mvp)}</b>에게${actualNote(f.mvp,O)}.`
+    '첫 골 팀':`첫 골은 ${ftTeam(p.firstTeam)}${iGa(ftTeam(p.firstTeam))} 넣을 줄 알았지만, 먼저 골망을 흔든 건 <b>${ftTeam(f.firstTeam)}</b>${ieot(ftTeam(f.firstTeam))}어요.`,
+    '첫 골 시간대':`첫 골 타이밍을 ${bandTxt(p.band)}${euRo(bandTxt(p.band))} 봤지만 실제론 <b>${bandTxt(f.firstBand)}</b>${ieot(bandTxt(f.firstBand))}어요. 시계가 살짝 빗나갔네요.`,
+    '전반전 결과':`전반을 ${res(p.half)}${euRo(res(p.half))} 봤지만, 실제 전반은 <b>${res(f.half)}</b>${euRo(res(f.half))} 끝났어요.`,
+    '카드 수':`카드는 ${cardLab(mid,p.cards)}${euRo(cardLab(mid,p.cards))} 봤지만 실제론 <b>${cardLab(mid,f.cards)}</b>${ieot(cardLab(mid,f.cards))}어요.`,
+    'MVP':`MVP로 <b>${esc(p.mvp)}</b>${eul(p.mvp)} 점찍었지만, 오늘의 영광은 <b>${esc(f.mvp)}</b>에게 돌아갔어요${actualNote(f.mvp,O)}.`
   };
   let advice;
   if(pct>=.65)advice='이 정도면 거의 도사. 다음 판도 믿고 갑니다 🔥';
