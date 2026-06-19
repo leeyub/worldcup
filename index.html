@@ -757,13 +757,14 @@ function renderMatch(mid){
   }else{
     if(!L.finished){
       html+=liveCard(mid,m,O,M);   // 라이브 카드 최상단
+      html+=boardCard(mid,m,O,M);  // 예측 비교 → 순위보다 위
       html+=rankingsCard(mid);
     }else{
       html+=resultCard(mid,m,O,M);
+      html+=boardCard(mid,m,O,M);
       html+=rankingsCard(mid);
     }
     html+=betCard(mid);
-    html+=boardCard(mid,m,O,M);
     html+=commentsCard(mid,M);
     html+=rulesCard();   // 마감(진행 중·종료) 후에도 항목별 배점을 친구들이 조회 가능
   }
