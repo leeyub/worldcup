@@ -1014,6 +1014,18 @@ const ANECDOTES_M1={
   '승현':`기자들에게 이름까지 팔리고 인터뷰도 한 오늘의 셀럽 🎤. 유명세만큼 픽도 화제였는지는 ‘{cl}’ 리포트가 말해주죠.`,
   '도현':`고대 옷까지 챙겨 왔지만 끝내 못 입은 날 👕. 만반의 준비가 무색했던 게, 오늘 픽이랑 평행이론이네요.`
 };
+// 2차전(멕시코전) 장외 스토리 — gname 기준, {cl}은 클러스터명으로 치환
+const ANECDOTES_M2={
+  '승현':`청계천 휴엔 좀 늦게 도착해 김치전·두부김치 같이 먹어줄 사람을 애타게 구했다죠 🍲. 그래도 1등까지 했으니 식사도 픽도 만족, 그야말로 ‘{cl}’.`,
+  '진우':`왕지각에 전반전은 통째로 미참석 🛌. 야무지게 알람 맞춰놓고도 지각이면 뭐함, 제때 와야 다음 배팅도 잘 풀리는 법인데 — 결국 끝까지 안 왔다는 후문이.`,
+  '석민':`별명은 석바오 🐼. 오늘 출근 안 하는 날이라며 제일 먼저 와서 자리까지 잡아준 일등 공신. 석바오 최고!`,
+  '도현':`해피프라이데이에 근무시간까지 쪼개 예약을 잡아준 도현님 📞. 정작 을지로까지 와놓고 업무 전화받으러 자꾸 사라져 경기를 못 즐겼다죠.`,
+  '수미':`이쪽도 왕지각, 전반 다 끝나고서야 등장 🩰. 발레리나답게 그랑 제떼로 점프해서 왔으면 딱 제시간이었을 텐데요.`,
+  '동엽':`경기날마다 7시 출근을 호언장담하지만 늘 실패 ⏰. 오늘도 7시 출근 내기에 져서 승현님께 ‘TIGER 미국배당다우존스’ 1주 헌납… 엉엉.`,
+  '호민':`감자튀김을 혼자 다 비운 유력 용의자 🍟. 늦게 왔더니 감튀가 반의반도 안 남았다는 증언이… 그 욕심이 배팅에도 묻어난 걸까요?`,
+  '승표':`청계천 휴엔 안 왔으면서 예측엔 칼같이 참여한 승표님 🎯. 그런데 승률까지 꽤 좋다는 게 더 얄미운 포인트.`,
+  '민우':`찐토토까지 병행한 진성 베터 🎰. 한국 승과 무승부에 3만원씩 걸었다는데… 하필 멕시코가 이겨버렸네요.`
+};
 // '첫 득점자/MVP'로 그 선수를 고른 게 왜 리스크였나 — 포지션·소속·득점확률(TEAMS) + 실제 역할 기반 맞춤 코멘트
 const PLAYER_NOTES={
   '손흥민':'LA FC 이적 뒤 골보다 연결·세트피스 비중이 커져, 첫 골 주인공으로는 한 박자 비껴간 선택',
@@ -1054,7 +1066,8 @@ function showReport(mid,pid){
   const order=S.participants.filter(x=>M.preds[x.id]&&!isAbsent(mid,x.id)).map(x=>({id:x.id,t:sc[x.id].total})).sort((a,b)=>b.t-a.t);
   const ranks=tieRanks(order.map(o=>o.t)), myRank=ranks[order.findIndex(o=>o.id===pid)], N=order.length;
   const cl=assignClusters(mid)[pid]||clusterOf(d), p=d.p, f=d.f, name=gname(S.participants.find(x=>x.id===pid).name);
-  const tmi=(mid==='m1'&&ANECDOTES_M1[name])?ANECDOTES_M1[name].split('{cl}').join(cl.n):null;
+  const anec=mid==='m1'?ANECDOTES_M1:mid==='m2'?ANECDOTES_M2:null;
+  const tmi=(anec&&anec[name])?anec[name].split('{cl}').join(cl.n):null;
   const pct=d.total/300, grade=pct>=.62?'S':pct>=.48?'A':pct>=.36?'B':pct>=.24?'C':pct>=.12?'D':'F';  // 300점 만점은 사실상 불가 → 현실적 곡선으로 상향
   const resHit=p.result===f.outcome, mvpHit=p.mvp===f.mvp, krHit=p.krFirst===f.krFirst, opHit=p.oppFirst===f.oppFirst;
   const lbl=l=>l==='상대 첫 득점자'?O.flag+' 첫 득점자':l;
