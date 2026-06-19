@@ -248,7 +248,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .reptl b{font-weight:800;color:var(--txt)}
 .betdesc{margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
 .betdesc .bdt{font-size:12px;font-weight:800;margin-bottom:7px}
-.betdesc .bdl{font-size:12px;color:var(--txt);line-height:1.6;margin-bottom:5px}
+.betdesc .bdl{font-size:12px;color:var(--txt);line-height:1.6;margin-bottom:5px;padding-left:1.4em;text-indent:-1.4em;word-break:keep-all}  /* ※ 행잉 인덴트: 둘째 줄이 ※ 뒤 텍스트에 정렬 */
 .betdesc .bdl:last-child{margin-bottom:0}
 .betdesc .bdl b{font-weight:800}
 .betdesc .bds{color:var(--sub)}
@@ -943,14 +943,14 @@ function betCard(mid){
     const face=top?'😎':last?'😭':'';
     return `<div class="betrow ${top?'free':''} ${last?'most':''}"><span class="brk">${top?'👑':ranks[i]}</span><span class="bnm">${avatarOf(r.p.id)} ${esc(gname(r.p.name))}</span><span class="bamt">${won(amt[i])}원 ${face}</span></div>`;
   }).join('');
-  const exNote=ex.length?`<div class="bstep"><span class="bn" style="visibility:hidden">①</span><span class="bc bds">※ ${ex.map(n=>esc(gname(n))).join('·')}님은 함께 식사하지 않아 정산 제외 (예측·순위는 그대로)</span></div>`:'';
+  const exNote=ex.length?`<div class="bdl bds">※ ${ex.map(n=>esc(gname(n))).join('·')}님은 함께 식사하지 않아 정산 제외 (예측·순위는 그대로)</div>`:'';
   return `<div class="card"><h3>🍱 점심값 배팅결과 정산 <span class="pt">총 ${won(lunch)}원</span></h3>
     <div class="betdesc">
       <div class="bdt">💡 어떻게 나눴나요?</div>
       <div class="bstep"><span class="bn">①</span><span class="bc">점심값 <b>${won(lunch)}원</b>을 <b>${N}명이 1/n</b><span class="bdr">→ 기본 <b>${won(even)}원</b>씩</span></span></div>
       <div class="bstep"><span class="bn">②</span><span class="bc">거기서 <b>순위 내기로 가감</b><span class="bds bsub">(1인 ${won(stake)}원 판돈을 등수대로 상금 분배)</span><span class="bdr">→ 1등 <b>${won(topCut)}원 덜 냄</b> … 꼴등 <b>${won(botAdd)}원 더 냄</b></span></span></div>
       <div class="bstep"><span class="bn">③</span><span class="bc">그래서 <b>각자 정산액</b><span class="bdr">→ 1등 <b>${won(amt[0])}원</b> … 꼴등 <b>${won(amt[N-1])}원</b></span></span></div>
-      <div class="bstep"><span class="bn" style="visibility:hidden">①</span><span class="bc bds">※ 다 더하면 ${won(lunch)}원(= 결제한 점심값 그대로) · 동점은 같은 금액 · 10원 단위 · 현재 순위 기준</span></div>
+      <div class="bdl bds">※ 다 더하면 ${won(lunch)}원(= 결제한 점심값 그대로) · 동점은 같은 금액 · 10원 단위 · 현재 순위 기준</div>
       ${exNote}
     </div>
     ${li}</div>`;
