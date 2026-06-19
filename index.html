@@ -165,8 +165,11 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .lbrow .nm{font-weight:700;font-size:14px;flex:1;min-width:0}
 .lbrow .pts{font-size:18px;font-weight:900;color:var(--gold)}
 .lbrow .pend{font-size:10px;color:var(--sub)}
-.lbrow.first{border-color:var(--selbd);background:linear-gradient(135deg,var(--sel),var(--card2))}
+/* 1등 = 골드 특별 컨테이너(왕관·골드 테두리), 나 = 파란 선택 → 색으로 명확히 구분 */
+.lbrow.first{border-color:var(--gold);background:linear-gradient(135deg,rgba(234,179,8,.20),var(--card2));box-shadow:inset 0 0 0 1.5px var(--gold)}
+.lbrow.first .rk{color:var(--gold)}
 .lbrow.me{border-color:var(--selbd);background:var(--sel);box-shadow:inset 0 0 0 1.5px var(--selbd)}  /* 로그인한 본인 행 = 선택 표시 */
+.lbrow.first.me{background:linear-gradient(135deg,rgba(234,179,8,.24),var(--sel))}  /* 본인이 1등이면 골드 우선 + 파란 힌트 */
 .permatch{width:100%;display:flex;gap:16px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:11px;color:var(--sub)}
 .permatch b{color:var(--txt);font-weight:800;margin-left:3px}
 .lbrow.gain{animation:gain 1.2s}
@@ -210,8 +213,12 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .repp{font-size:13px;line-height:1.65;color:var(--txt)}
 .repp.dim{color:var(--sub)}
 .repp b{font-weight:800}
-.rephit{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:46px;font-size:13px;font-weight:700;color:var(--green);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.22);border-radius:9px;padding:9px 12px;margin-bottom:6px}
-.rephit>span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rephit{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.22);border-radius:9px;padding:10px 12px;margin-bottom:6px}
+.rephit .rhmain{min-width:0}
+.rephit .rhlbl{font-size:13px;font-weight:800;color:var(--green)}
+.rephit .rhtag{font-size:10px;font-weight:800;color:var(--gold);background:var(--sel);padding:1px 6px;border-radius:6px;margin-left:6px;white-space:nowrap}
+.rephit .rhmine{font-size:12px;font-weight:600;color:var(--sub);margin-top:3px;word-break:keep-all}
+.rephit .hp .hpmax{font-size:11px;font-weight:700;color:var(--sub)}
 .rules{display:flex;flex-direction:column}
 .rulerow{padding:9px 0;border-bottom:1px solid var(--line)}
 .rulerow:last-child{border-bottom:none}
@@ -220,7 +227,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .rulerow .rp{font-size:14px;font-weight:900;color:var(--gold);white-space:nowrap}
 .rulerow .rd{font-size:11px;color:var(--sub);margin-top:2px}
 .rephit:last-child{margin-bottom:0}
-.rephit .hp{font-weight:900;white-space:nowrap}
+.rephit .hp{font-weight:900;white-space:nowrap;color:var(--green);font-size:14px}
 .repmiss{border-left:3px solid var(--red);padding:2px 0 2px 11px;margin-bottom:13px}  /* 빨간 라인이 콘텐츠보다 살짝만 높게 */
 .repmiss:last-child{margin-bottom:0}
 .repmiss .rmlbl{font-size:13px;font-weight:800}
@@ -249,6 +256,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .betdesc .bstep .bn{font-weight:800;flex-shrink:0}
 .betdesc .bstep .bc{flex:1;min-width:0}
 .betdesc .bstep .bdr{display:block;margin-top:3px}  /* 결과는 화살표로 줄바꿈, 윗줄 내용과 같은 들여쓰기 */
+.betdesc .bstep .bsub{display:block;margin-top:3px}  /* 괄호 보조설명도 줄바꿈, 내용과 같은 들여쓰기 */
 .betdesc .bstep b{font-weight:800}
 .evlog{font-size:12px;color:var(--sub);line-height:1.9}
 #toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
@@ -907,14 +915,14 @@ function betSplit(mid){
   const rows=attendees(mid).filter(p=>!ex.includes(p.name)).map(p=>({p,t:sc[p.id]?sc[p.id].total:0})).sort((a,b)=>b.t-a.t);
   const N=rows.length;
   if(N<2)return null;
-  const even=Math.round(lunch/N);             // 점심값 엔빵 1인분
+  const even=Math.round(lunch/N/10)*10;       // 점심값 엔빵 1인분(10원 단위)
   const pool=stake*N, gross=even+stake;        // 상금풀 / 1인당 총 부담(점심+판돈)
   const pos=new Array(N);                       // 동점은 평균 등수 → 같은 금액
   let i=0;
   while(i<N){let j=i;while(j+1<N&&rows[j+1].t===rows[i].t)j++;const avg=(i+j)/2;for(let k=i;k<=j;k++)pos[k]=avg;i=j+1;}
   // 순위 비례 상금: 가중치 (N-1-등수) → 1등 최다(=2×판돈) … 꼴등 0(판돈 전액 잃음), 합 = 상금풀
   const W=N*(N-1)/2;
-  const prize=pos.map(pv=>Math.round(pool*(N-1-pv)/W/100)*100);
+  const prize=pos.map(pv=>Math.round(pool*(N-1-pv)/W/10)*10);   // 10원 단위
   // 반올림·1/n 잔액은 중간 등수가 흡수 → 1등은 정확히 'even-판돈', 꼴등은 정확히 'even+판돈'으로 딱 떨어지게
   const midIdx=Math.max(1,Math.min(N-2,Math.round((N-1)/2)));
   prize[midIdx]+=pool-prize.reduce((a,b)=>a+b,0);  // 상금풀 잔액 → 중간 등수
@@ -935,14 +943,14 @@ function betCard(mid){
     const face=top?'😎':last?'😭':'';
     return `<div class="betrow ${top?'free':''} ${last?'most':''}"><span class="brk">${top?'👑':ranks[i]}</span><span class="bnm">${avatarOf(r.p.id)} ${esc(gname(r.p.name))}</span><span class="bamt">${won(amt[i])}원 ${face}</span></div>`;
   }).join('');
-  const exNote=ex.length?`<div class="bdl bds">※ ${ex.map(n=>esc(gname(n))).join('·')}님은 함께 식사하지 않아 정산 제외 (예측·순위는 그대로)</div>`:'';
+  const exNote=ex.length?`<div class="bstep"><span class="bn" style="visibility:hidden">①</span><span class="bc bds">※ ${ex.map(n=>esc(gname(n))).join('·')}님은 함께 식사하지 않아 정산 제외 (예측·순위는 그대로)</span></div>`:'';
   return `<div class="card"><h3>🍱 점심값 배팅결과 정산 <span class="pt">총 ${won(lunch)}원</span></h3>
     <div class="betdesc">
       <div class="bdt">💡 어떻게 나눴나요?</div>
       <div class="bstep"><span class="bn">①</span><span class="bc">점심값 <b>${won(lunch)}원</b>을 <b>${N}명이 1/n</b><span class="bdr">→ 기본 <b>${won(even)}원</b>씩</span></span></div>
-      <div class="bstep"><span class="bn">②</span><span class="bc">거기서 <b>순위 내기로 가감</b> <span class="bds">(1인 ${won(stake)}원 판돈을 등수대로 상금 분배)</span><span class="bdr">→ 1등 <b>${won(topCut)}원 덜 냄</b> … 꼴등 <b>${won(botAdd)}원 더 냄</b></span></span></div>
+      <div class="bstep"><span class="bn">②</span><span class="bc">거기서 <b>순위 내기로 가감</b><span class="bds bsub">(1인 ${won(stake)}원 판돈을 등수대로 상금 분배)</span><span class="bdr">→ 1등 <b>${won(topCut)}원 덜 냄</b> … 꼴등 <b>${won(botAdd)}원 더 냄</b></span></span></div>
       <div class="bstep"><span class="bn">③</span><span class="bc">그래서 <b>각자 정산액</b><span class="bdr">→ 1등 <b>${won(amt[0])}원</b> … 꼴등 <b>${won(amt[N-1])}원</b></span></span></div>
-      <div class="bdl bds">※ 다 더하면 ${won(lunch)}원(= 결제한 점심값 그대로) · 동점은 같은 금액 · 100원 단위 · 현재 순위 기준</div>
+      <div class="bstep"><span class="bn" style="visibility:hidden">①</span><span class="bc bds">※ 다 더하면 ${won(lunch)}원(= 결제한 점심값 그대로) · 동점은 같은 금액 · 10원 단위 · 현재 순위 기준</span></div>
       ${exNote}
     </div>
     ${li}</div>`;
@@ -1150,7 +1158,11 @@ function showReport(mid,pid){
       ${tmi?`<div class="repsec"><h3>🎪 오늘의 장외 스토리</h3><div class="repp">${tmi}</div></div>`:''}
       <div class="repsec"><h3>🎬 무슨 일이 있었나</h3><div class="reptl">${tl}</div></div>
       <div class="repsec"><h3>✨ 신의 한 수</h3>
-        ${hits.length?hits.slice(0,4).map(it=>`<div class="rephit"><span>${lbl(it.label)} · 내 예측 ${esc(String(it.yours))}</span><span class="hp">+${it.pts}점</span></div>`).join(''):'<div class="repp dim">…이번엔 빈손이었어요 😇</div>'}
+        ${hits.length?hits.slice(0,4).map(it=>{
+          const part=it.pts<it.max;
+          const tag=!part?'':it.label==='최종 스코어'?(it.pts>=30?'승패 방향 적중':'한 팀 점수 적중'):it.label==='첫 골 시간대'?'인접 시간대':it.label==='카드 수'?'인접 적중':'부분 적중';
+          return `<div class="rephit"><div class="rhmain"><div class="rhlbl">${lbl(it.label)}${tag?`<span class="rhtag">${tag}</span>`:''}</div><div class="rhmine">내 예측 ${esc(String(it.yours))}</div></div><span class="hp">+${it.pts}점${part?`<span class="hpmax"> /${it.max}</span>`:''}</span></div>`;
+        }).join(''):'<div class="repp dim">…이번엔 빈손이었어요 😇</div>'}
       </div>
       <div class="repsec"><h3>💥 패착 분석</h3>
         ${misses.length?misses.slice(0,4).map(it=>`<div class="repmiss"><div class="rmlbl">${lbl(it.label)} <span class="rmpt">-${it.max}점</span></div><div class="rmvs">${why[it.label]||('내 예측 <b>'+esc(String(it.yours))+'</b> → 실제 <b>'+esc(String(it.actual))+'</b>')}</div></div>`).join(''):'<div class="repp dim">완벽했어요! 흠잡을 데가 없네요 🎉</div>'}
@@ -1211,10 +1223,10 @@ function squadCard(m,O){
     return `<div class="sqteam"><div class="sqhd"><span class="f">${t.flag}</span>${t.name}</div>
       ${ps.map(p=>`<div class="sqrow"><span class="sqnum">${p.num||'-'}</span><span class="sqn">${esc(p.n)}</span><span class="sqpos">${p.pos}</span></div>`).join('')}</div>`;
   };
-  const note=m.opp==='mx'?'중계 화면 등번호로 선수를 찾을 때 참고하세요 (한국·멕시코 선발/벤치 기준)'
-    :'중계 화면 등번호로 선수를 찾을 때 참고하세요 · 상대팀 번호는 잠정이라 실제와 다를 수 있어요';
+  const note=m.opp==='mx'?'중계 화면 등번호로 선수를 찾을 때 참고하세요<br>(한국·멕시코 선발/벤치 기준)'
+    :'중계 화면 등번호로 선수를 찾을 때 참고하세요<br>(상대팀 번호는 잠정이라 실제와 다를 수 있어요)';
   return `<div class="card"><h3>🔢 등번호 <span class="pt">선수 찾기</span></h3>
-    <div class="hint">${note}</div>
+    <div class="hint" style="word-break:keep-all">${note}</div>
     <div class="squads">${block(TEAMS.kr)}${block(O)}</div></div>`;
 }
 // 순위 카드 — 내부 탭(이 경기 | 종합)
