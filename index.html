@@ -219,7 +219,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .rephit .rhtag{font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;white-space:nowrap;line-height:1.3}
 .rephit .rhtag.full{color:var(--green);background:rgba(52,211,153,.18)}
 .rephit .rhtag.part{color:var(--sub);background:rgba(130,130,130,.18)}  /* 부분점수 = 그레이스케일 반투명(초록과 색충돌 회피) */
-.rephit .rhmine{font-size:12px;font-weight:600;color:var(--sub);margin-top:3px;word-break:keep-all}
+.rephit .rhmine{font-size:12px;font-weight:600;color:var(--sub);margin-top:7px;word-break:keep-all}
 .rephit .hp .hpmax{font-size:11px;font-weight:700;color:var(--sub)}
 .rules{display:flex;flex-direction:column}
 .rulerow{padding:9px 0;border-bottom:1px solid var(--line)}
@@ -1170,7 +1170,7 @@ function showReport(mid,pid){
             else if(it.label==='카드 수') badgeText='인접 개수 적중';
             else badgeText='부분 적중';
           }
-          return `<div class="rephit"><div class="rhmain"><div class="rhlbl">${lbl(it.label)} <span class="rhtag ${part?'part':'full'}">${badgeText}</span></div><div class="rhmine">내 예측 ${esc(String(it.yours))}</div></div><span class="hp">+${it.pts}점${part?`<span class="hpmax"> /${it.max}</span>`:''}</span></div>`;
+          return `<div class="rephit"><div class="rhmain"><div class="rhlbl">${lbl(it.label)} <span class="rhtag ${part?'part':'full'}">${badgeText}</span></div><div class="rhmine">내 예측 ${esc(String(it.yours))}</div></div><span class="hp">+${it.pts}점</span></div>`;
         }).join(''):'<div class="repp dim">…이번엔 빈손이었어요 😇</div>'}
       </div>
       <div class="repsec"><h3>💥 패착 분석</h3>
