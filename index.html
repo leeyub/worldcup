@@ -89,6 +89,7 @@ header .sub{color:var(--sub);font-size:12px;margin-top:4px}
 .mhead .vs{font-size:12px;color:var(--sub);font-weight:700}
 .mhead .sc{font-size:30px;font-weight:900;letter-spacing:2px}
 .minfo{text-align:center;color:var(--sub);font-size:12px;margin-bottom:18px}
+.minfo .mrow{display:inline-flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap}
 .livechip{display:inline-flex;align-items:center;gap:4px;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;vertical-align:middle}
 .livechip.sm{font-size:8px;padding:1px 6px;gap:3px}
 .livechip .dot{width:5px;height:5px;border-radius:50%;background:#fff;animation:pulse 1.2s infinite}
@@ -133,6 +134,7 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .bgtag.uni{background:var(--sel);color:var(--gold)}
 .bgtag.no{background:rgba(248,113,113,.16);color:#f87171}
 .bgn{font-size:12px;color:var(--sub);line-height:1.7}
+.bdesc{font-size:12px;font-weight:700;color:var(--gold);background:var(--sel);border-radius:8px;padding:7px 11px;margin-bottom:12px}
 /* 한 줄 코멘트 — 카드 + 상단 롤링 티커 */
 .cmts{display:flex;flex-direction:column;gap:10px}
 .cmt{display:flex;gap:8px;font-size:13px;align-items:baseline;flex-wrap:wrap}
@@ -717,7 +719,7 @@ function renderMatch(mid){
     <div>${L.on||L.finished?`<div class="sc">${krs} : ${ops}</div>`:`<div class="vs">VS</div>`}</div>
     <div class="t"><span class="f">${O.flag}</span>${O.name}</div>
   </div>
-  <div class="minfo">${m.label} · ${m.date} · ${m.venue} ${L.finished?'<span class="endchip">경기 종료</span>':liveNow(m,M)?'<span class="livechip"><span class="dot"></span>LIVE</span>':''}</div>`;
+  <div class="minfo"><span class="mrow">${m.label} · ${m.date} · ${m.venue}${L.finished?'<span class="endchip">경기 종료</span>':liveNow(m,M)?'<span class="livechip"><span class="dot"></span>LIVE</span>':''}</span></div>`;
   if(M.locked)html+=commentTicker(M);
 
   // 실제 라이브 진행 중(킥오프 후)에만 참여자 카드 숨김 — 경기 집중. 마감/라이브 시작만으론 유지.
@@ -848,24 +850,30 @@ function matchRows(M,anim,mid){
       <div class="breakdown">${r.items.map(it=>`<div class="bd-it ${it.state}"><span>${lbl(it.label)}</span><span>${it.state==='pend'?'⏳ '+it.max+'점':it.pts+'/'+it.max}</span></div>`).join('')}</div>
     </div>`;}).join('')}</div>`;
 }
-// 종합(3경기 합산) 순위 행들
+// 종합 순위 행들 — 차수별 미참석자가 있어 합산 대신 "참여 경기 평균"으로 비교
 function totalRows(){
   const totals={};
-  S.participants.forEach(p=>totals[p.id]={t:0,per:[]});
+  S.participants.forEach(p=>totals[p.id]={sum:0,cnt:0,per:[]});
   MATCHES.forEach(m=>{
     const sc=matchScores(S.matches[m.id],m.id);
-    S.participants.forEach(p=>{const ab=isAbsent(m.id,p.id);const v=ab?null:(sc[p.id]?sc[p.id].total:null);totals[p.id].per.push(ab?'x':v);totals[p.id].t+=(v||0);});
+    S.participants.forEach(p=>{
+      const ab=isAbsent(m.id,p.id);
+      const v=ab?null:(sc[p.id]?sc[p.id].total:null);
+      totals[p.id].per.push(ab?'x':v);
+      if(v!=null){totals[p.id].sum+=v;totals[p.id].cnt++;}   // 참여(예측 제출)한 경기만 평균 분모에 포함
+    });
   });
-  const rows=S.participants.filter(p=>MATCHES.some(m=>!isAbsent(m.id,p.id))).map(p=>({p,...totals[p.id]})).sort((a,b)=>b.t-a.t);
+  const rows=S.participants.map(p=>({p,...totals[p.id],avg:totals[p.id].cnt?Math.round(totals[p.id].sum/totals[p.id].cnt):0}))
+    .filter(r=>r.cnt>0).sort((a,b)=>b.avg-a.avg);
   if(!rows.length)return '<div class="hint" style="margin:0">참여자가 없습니다</div>';
-  const ranks=tieRanks(rows.map(r=>r.t));
+  const ranks=tieRanks(rows.map(r=>r.avg));
   return `<div class="lb">${rows.map((r,i)=>{
-    const top=ranks[i]===1&&r.t>0;
-    const last=rows.length>=3&&i===rows.length-1&&r.t>0;
+    const top=ranks[i]===1&&r.avg>0;
+    const last=rows.length>=3&&i===rows.length-1&&r.avg>0;
     return `<div class="lbrow ${top?'first':''}${r.p.id===USER?' me':''}" style="flex-wrap:wrap">
       <span class="rk">${top?'👑':ranks[i]}</span>
       <span class="nm">${avatarOf(r.p.id)} ${esc(gname(r.p.name))}${r.p.id===USER?' <span class="tag">나</span>':''} ${last?'<span class="tag">🍗 치킨</span>':''}</span>
-      <span class="pts">${r.t}점</span>
+      <span class="pts">${r.avg}점</span>
       <div class="permatch">${r.per.map((v,j)=>`<span>${j+1}차 <b>${v==='x'?'·':v===null?'-':v}</b></span>`).join('')}</div>
     </div>`;
   }).join('')}</div>`;
@@ -1096,7 +1104,7 @@ function rankingsCard(mid){
   const stab=(v,l)=>`<button class="subtab ${t===v?'on':''}" onclick="S.rankTab='${v}';render()">${l}</button>`;
   const body=t==='total'?totalRows():matchRows(M,true,mid);
   const report=M.live.finished&&t!=='total';
-  const foot=t==='total'?'3경기 합산 · 최대 900점 · 행을 누르면 경기별 점수':'이 경기 점수 · 행을 누르면 항목별 점수';
+  const foot=t==='total'?'참여한 경기들의 평균 점수 · 행을 누르면 경기별 점수':'이 경기 점수 · 행을 누르면 항목별 점수';
   return `<div class="card"><h3>📊 순위</h3>
     <div class="subtabs">${stab('this','이 경기')}${stab('total','종합')}</div>
     ${report?'<div class="hint" style="margin:0 0 12px;line-height:1.6">오늘의 경기가 종료되었어요.<br>이름을 누르면 개인 베팅 성향에 대한 상세 리포트를 볼 수 있어요.</div>':''}
@@ -1126,6 +1134,17 @@ function boardCard(mid,m,O,M){
     {key:'mvp',label:'MVP',get:p=>p.mvp,fact:f.mvp}
   ];
   const cur=CATS.find(c=>c.key===(S.boardTab||'result'))||CATS[0];
+  // 각 탭별 배점·부분점수 설명 — 배점 규칙(rulesCard)·예측 폼과 동일한 문구
+  const SCOREDESC={
+    result:'맞히면 60점',
+    score:'정확히 맞히면 70점 · 승패 방향만 30점 · 한 팀 점수만 15점',
+    krFirst:'맞히면 40점', oppFirst:'맞히면 40점',
+    firstTeam:'맞히면 15점',
+    band:'정확히 맞히면 30점 · 인접 시간대 15점',
+    half:'맞히면 15점',
+    cards:cardEx(mid)?'정확히 맞히면 15점 · 인접하면 7점':'맞히면 15점',
+    mvp:'맞히면 15점'
+  };
   const tabs=CATS.map(c=>`<button class="btab ${c.key===cur.key?'on':''}" onclick="S.boardTab='${c.key}';render()">${c.label}</button>`).join('');
   const known=cur.fact!==undefined, factStr=known?String(cur.fact):null;
   // 같은 예측끼리 그룹핑 → 인원 많은 순 (단독 픽은 자연히 1명 그룹으로 분리)
@@ -1152,6 +1171,7 @@ function boardCard(mid,m,O,M){
   return `<div class="card"><h3>👀 ${m.label} 예측 비교</h3>
     <div class="hint">${hint}</div>
     <div class="btabs">${tabs}</div>
+    <div class="bdesc">${SCOREDESC[cur.key]||''}</div>
     ${body}</div>`;
 }
 // 상단 롤링 코멘트 티커 (마감 후, 코멘트 있을 때만)
