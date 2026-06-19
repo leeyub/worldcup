@@ -893,33 +893,38 @@ function totalRows(){
   }).join('')}</div>`;
 }
 /* ---------- 점심값 내기 = 9,000원 상금풀(순위 비례 분배) + 점심값 엔빵 ---------- */
-const LUNCH_TOTAL=196000; // 점심값(전원 엔빵 대상)
-const BET_STAKE=9000;     // 1인당 내기 판돈 — 모아서 상금풀, 순위 비례로 분배
+// 점심값·판돈은 경기별로 다름. 정산 제외자(함께 식사 안 한 사람)는 예측·순위엔 남고 정산에서만 빠짐
+const LUNCH={m1:196000,m2:125000,m3:125000};   // 결제한 점심값(엔빵 대상)
+const STAKE={m1:9000,m2:10000,m3:10000};       // 1인당 내기 판돈
+const BILL_EXCLUDE={m2:['곽승표','전진우']};      // 그 경기 정산에서 제외(이름 기준)
+const lunchOf=mid=>LUNCH[mid]||125000;
+const stakeOf=mid=>STAKE[mid]||10000;
 function won(n){return n.toLocaleString('ko-KR');}
 function betSplit(mid){
+  const lunch=lunchOf(mid), stake=stakeOf(mid), ex=BILL_EXCLUDE[mid]||[];
   const sc=matchScores(S.matches[mid],mid);
-  const rows=attendees(mid).map(p=>({p,t:sc[p.id]?sc[p.id].total:0})).sort((a,b)=>b.t-a.t);
+  const rows=attendees(mid).filter(p=>!ex.includes(p.name)).map(p=>({p,t:sc[p.id]?sc[p.id].total:0})).sort((a,b)=>b.t-a.t);
   const N=rows.length;
   if(N<2)return null;
-  const even=Math.round(LUNCH_TOTAL/N);       // 점심값 엔빵 1인분
-  const pool=BET_STAKE*N, gross=even+BET_STAKE; // 상금풀 / 1인당 총 부담(점심+판돈)
+  const even=Math.round(lunch/N);             // 점심값 엔빵 1인분
+  const pool=stake*N, gross=even+stake;        // 상금풀 / 1인당 총 부담(점심+판돈)
   const pos=new Array(N);                       // 동점은 평균 등수 → 같은 금액
   let i=0;
   while(i<N){let j=i;while(j+1<N&&rows[j+1].t===rows[i].t)j++;const avg=(i+j)/2;for(let k=i;k<=j;k++)pos[k]=avg;i=j+1;}
-  // 순위 비례 상금: 가중치 (N-1-등수) → 1등 최다 … 꼴등 0(판돈 9,000원 전액 잃음), 합 = 상금풀
+  // 순위 비례 상금: 가중치 (N-1-등수) → 1등 최다 … 꼴등 0(판돈 전액 잃음), 합 = 상금풀
   const W=N*(N-1)/2;
   const prize=pos.map(pv=>Math.round(pool*(N-1-pv)/W/100)*100);
   prize[0]+=pool-prize.reduce((a,b)=>a+b,0);    // 반올림 잔액은 1등 상금에 보정
   // 최종 낼 돈 = 점심엔빵 + 판돈 - 받은 상금
   const amt=prize.map(pr=>gross-pr);
-  amt[N-1]+=LUNCH_TOTAL-amt.reduce((a,b)=>a+b,0); // 합계가 정확히 점심값이 되도록 꼴등 보정
-  prize[N-1]=gross-amt[N-1];                      // 꼴등 표시 일관성(점심+판돈-상금=최종)
-  return {rows,amt,prize,even,gross,pool};
+  amt[N-1]+=lunch-amt.reduce((a,b)=>a+b,0);     // 합계가 정확히 점심값이 되도록 꼴등 보정
+  prize[N-1]=gross-amt[N-1];                     // 꼴등 표시 일관성(점심+판돈-상금=최종)
+  return {rows,amt,prize,even,gross,pool,lunch,stake,ex};
 }
 function betCard(mid){
   if(!S.matches[mid].live.finished)return ''; // 이 경기가 끝나야 표시
   const b=betSplit(mid); if(!b)return '';
-  const {rows,amt,even}=b;
+  const {rows,amt,even,lunch,stake,ex}=b;
   const ranks=tieRanks(rows.map(r=>r.t));
   const N=rows.length;
   const topCut=even-amt[0], botAdd=amt[N-1]-even;   // 1등이 덜 내는 액 · 꼴등이 더 내는 액
@@ -928,13 +933,15 @@ function betCard(mid){
     const face=top?'😎':last?'😭':'';
     return `<div class="betrow ${top?'free':''} ${last?'most':''}"><span class="brk">${top?'👑':ranks[i]}</span><span class="bnm">${avatarOf(r.p.id)} ${esc(gname(r.p.name))}</span><span class="bamt">${won(amt[i])}원 ${face}</span></div>`;
   }).join('');
-  return `<div class="card"><h3>🍱 점심값 정산 <span class="pt">총 ${won(LUNCH_TOTAL)}원</span></h3>
+  const exNote=ex.length?`<div class="bdl bds">※ ${ex.map(n=>esc(gname(n))).join('·')}님은 함께 식사하지 않아 정산 제외 (예측·순위는 그대로)</div>`:'';
+  return `<div class="card"><h3>🍱 점심값 정산 <span class="pt">총 ${won(lunch)}원</span></h3>
     <div class="betdesc">
       <div class="bdt">💡 어떻게 나눴나요?</div>
-      <div class="bstep"><span class="bn">①</span><span class="bc">점심값 <b>${won(LUNCH_TOTAL)}원</b>을 <b>${N}명이 1/n</b><span class="bdr">→ 기본 <b>${won(even)}원</b>씩</span></span></div>
-      <div class="bstep"><span class="bn">②</span><span class="bc">거기서 <b>순위 내기로 가감</b> <span class="bds">(1인 ${won(BET_STAKE)}원 판돈을 등수대로 상금 분배)</span><span class="bdr">→ 1등 <b>${won(topCut)}원 덜 냄</b> … 꼴등 <b>${won(botAdd)}원 더 냄</b></span></span></div>
+      <div class="bstep"><span class="bn">①</span><span class="bc">점심값 <b>${won(lunch)}원</b>을 <b>${N}명이 1/n</b><span class="bdr">→ 기본 <b>${won(even)}원</b>씩</span></span></div>
+      <div class="bstep"><span class="bn">②</span><span class="bc">거기서 <b>순위 내기로 가감</b> <span class="bds">(1인 ${won(stake)}원 판돈을 등수대로 상금 분배)</span><span class="bdr">→ 1등 <b>${won(topCut)}원 덜 냄</b> … 꼴등 <b>${won(botAdd)}원 더 냄</b></span></span></div>
       <div class="bstep"><span class="bn">③</span><span class="bc">그래서 <b>각자 정산액</b><span class="bdr">→ 1등 <b>${won(amt[0])}원</b> … 꼴등 <b>${won(amt[N-1])}원</b></span></span></div>
-      <div class="bdl bds">※ 다 더하면 ${won(LUNCH_TOTAL)}원(= 결제한 점심값 그대로) · 동점은 같은 금액 · 100원 단위 · 현재 순위 기준</div>
+      <div class="bdl bds">※ 다 더하면 ${won(lunch)}원(= 결제한 점심값 그대로) · 동점은 같은 금액 · 100원 단위 · 현재 순위 기준</div>
+      ${exNote}
     </div>
     ${li}</div>`;
 }
