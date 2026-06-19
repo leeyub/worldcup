@@ -196,7 +196,15 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .repp{font-size:13px;line-height:1.65;color:var(--txt)}
 .repp.dim{color:var(--sub)}
 .repp b{font-weight:800}
-.rephit{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--green);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.22);border-radius:9px;padding:9px 12px;margin-bottom:6px}
+.rephit{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:46px;font-size:13px;font-weight:700;color:var(--green);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.22);border-radius:9px;padding:9px 12px;margin-bottom:6px}
+.rephit>span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rules{display:flex;flex-direction:column}
+.rulerow{padding:9px 0;border-bottom:1px solid var(--line)}
+.rulerow:last-child{border-bottom:none}
+.rulerow .rmain{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.rulerow .rn{font-size:13px;font-weight:700}
+.rulerow .rp{font-size:14px;font-weight:900;color:var(--gold);white-space:nowrap}
+.rulerow .rd{font-size:11px;color:var(--sub);margin-top:2px}
 .rephit:last-child{margin-bottom:0}
 .rephit .hp{font-weight:900;white-space:nowrap}
 .repmiss{border-left:3px solid var(--red);padding:2px 0 2px 11px;margin-bottom:13px}  /* 빨간 라인이 콘텐츠보다 살짝만 높게 */
@@ -610,6 +618,20 @@ function render(){
   renderTop(); renderTabs();
   renderMatch(S.tab);
   centerActiveTabs();
+  saveSnap(S.tab);
+}
+// 점수 스냅샷 — 나갔다 들어왔을 때(새로고침) 그동안 바뀐 점수를 토스트로 한 번에 보여줌
+function curScores(mid){if(mid==='total'||!S.matches[mid])return null;const sc=matchScores(S.matches[mid],mid);const o={};for(const k in sc)o[k]=sc[k].total;return o;}
+function saveSnap(mid){if(DEMO_MODE)return;const s=curScores(mid);if(s)try{localStorage.setItem('wc_seen_'+mid,JSON.stringify(s));}catch(e){}}
+function replayMissed(mid){
+  if(DEMO_MODE)return;
+  let prev;try{prev=JSON.parse(localStorage.getItem('wc_seen_'+mid)||'null');}catch(e){return;}
+  if(!prev)return;
+  const now=curScores(mid);if(!now)return;
+  const ds=[];for(const pid in now){const d=now[pid]-(prev[pid]||0);if(d)ds.push([pid,d]);}
+  if(!ds.length)return;
+  ds.sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
+  ds.slice(0,10).forEach(([pid,d])=>{if(d>0)toast(`${avatarOf(pid)} ${gpname(pid)} +${d}점!`);else toast(`${avatarOf(pid)} ${gpname(pid)} ${d}점`,true);});
 }
 // 가로 스크롤 탭바: 활성 탭이 항상 보이도록 가운데로 (탭 이동 시 스크롤 원복 방지)
 function centerActiveTabs(){
@@ -714,6 +736,7 @@ function renderMatch(mid){
   }
 
   if(!M.locked){
+    html+=rulesCard();   // 배점 규칙을 예측 전 상단에 노출
     html+=`<div class="card"><h3>📝 예측 입력 <span class="pt">최대 300점</span></h3>
       <div class="hint">직원 인증(이름·사번·전화번호) 후 본인 예측을 입력하세요.<br>마감 전까지는 서로 안 보입니다 🤫</div>
       ${USER
@@ -728,7 +751,6 @@ function renderMatch(mid){
     // 마감 전에도 결과(라이브) 입력 가능
     if(L.finished) html+=resultCard(mid,m,O,M);
     else if(L.on||ADMIN) html+=liveCard(mid,m,O,M);
-    html+=rulesCard();
   }else{
     if(!L.finished){
       html+=liveCard(mid,m,O,M);   // 라이브 카드 최상단
@@ -746,8 +768,19 @@ function renderMatch(mid){
 }
 
 function rulesCard(){
-  return `<div class="card"><h3>📐 배점 규칙</h3><div class="evlog">
-  경기 결과 60점 · 최종 스코어 70점(승패만 30·한 팀만 15) · 양팀 첫 득점자 각 40점 · 첫 골 팀 15점 · 첫 골 시간대 30점(인접 15점) · 전반전 결과 15점 · 카드 수 15점 · MVP 15점 — 합계 300점</div></div>`;
+  const rows=[
+    ['경기 결과','60점','한국 승/무/패'],
+    ['최종 스코어','70점','정확히 70 · 승패 방향만 30 · 한 팀 점수만 15'],
+    ['양 팀 첫 득점자','각 40점','한국 · 상대 각각'],
+    ['첫 골 팀','15점','어느 팀이 먼저 득점'],
+    ['첫 골 시간대','30점','정확히 30 · 인접 시간대 15'],
+    ['전반전 결과','15점','전반 종료 시점 승/무/패'],
+    ['카드 수','15점','양 팀 합산 경고 수'],
+    ['MVP','15점','경기 MVP']
+  ];
+  return `<div class="card"><h3>📐 배점 규칙 <span class="pt">합계 300점</span></h3>
+    <div class="hint">예측 항목별 배점이에요. 큰 점수일수록 승부처 🎯</div>
+    <div class="rules">${rows.map(([n,p,d])=>`<div class="rulerow"><div class="rmain"><span class="rn">${n}</span><span class="rp">${p}</span></div><div class="rd">${d}</div></div>`).join('')}</div></div>`;
 }
 function liveCard(mid,m,O,M){
   const L=M.live;
@@ -1003,28 +1036,32 @@ function showReport(mid,pid){
   const lbl=l=>l==='상대 첫 득점자'?O.flag+' 첫 득점자':l;
   const res=v=>v===1?'🇰🇷 한국 승':v===0?'무승부':O.name+' 승';
   const ftTeam=v=>v==='kr'?'한국':v==='opp'?O.name:'무득점';
+  // 한글 조사 자동 선택 (받침 유무로 이/가·이라/라·이었/였·으로/로)
+  const _jong=w=>{const s=String(w).replace(/[^가-힣]/g,'');return s?((s.charCodeAt(s.length-1)-0xAC00)%28!==0):false;};
+  const iGa=w=>_jong(w)?'이':'가', iRa=w=>_jong(w)?'이라':'라', ieot=w=>_jong(w)?'이었':'였';
+  const euRo=w=>{const s=String(w).replace(/[^가-힣]/g,'');if(!s)return'로';const j=(s.charCodeAt(s.length-1)-0xAC00)%28;return(j===0||j===8)?'로':'으로';};
   const hits=d.items.filter(it=>it.state==='hit').sort((a,b)=>b.pts-a.pts);
   const misses=d.items.filter(it=>it.state==='miss').sort((a,b)=>b.max-a.max);
   const lean=p.result===1?'한국 승리를 믿은 낙관파':p.result===-1?O.name+' 우세를 점친 역배파':'무승부를 노린 중립파';
   const aggr=p.kr>=3?'한국 다득점을 노린 공격형':(p.kr+p.opp)<=1?'짠물 승부를 그린 수비형':'적당한 스코어를 그린 균형형';
-  const style=`${esc(name)}님은 <b>${lean}</b>이자 <b>${aggr}</b> 베터예요. 한국 ${p.kr}:${p.opp}에 첫 골은 ${ftTeam(p.firstTeam)}, 첫 득점자 ${esc(p.krFirst)}, MVP ${esc(p.mvp)}로 그림을 그렸죠.`;
+  const style=`${esc(name)}님은 <b>${lean}</b>이자 <b>${aggr}</b> 베터예요. 한국 ${p.kr}:${p.opp}에 첫 골은 ${ftTeam(p.firstTeam)}, 첫 득점자 ${esc(p.krFirst)}, MVP ${esc(p.mvp)}${euRo(p.mvp)} 그림을 그렸죠.`;
   const tl=[
     {fact:`경기는 <b>${f.kr}:${f.opp}</b>, ${f.outcome===1?'🇰🇷 한국 승리':f.outcome===-1?O.flag+' '+O.name+' 승':'무승부'}`, mine:`내 예측 ${res(p.result)}`, ok:resHit},
-    {fact:`첫 골: <b>${ftTeam(f.firstTeam)}</b>이 <b>${bandTxt(f.firstBand)}</b>에 선제`, mine:`내 예측 ${bandTxt(p.band)}`, ok:p.band===f.firstBand},
+    {fact:`첫 골: <b>${ftTeam(f.firstTeam)}</b>${iGa(ftTeam(f.firstTeam))} <b>${bandTxt(f.firstBand)}</b>에 선제`, mine:`내 예측 ${bandTxt(p.band)}`, ok:p.band===f.firstBand},
     {fact:`득점자: 🇰🇷 <b>${esc(f.krFirst)}</b> · ${O.flag} <b>${esc(f.oppFirst)}</b>`, mine:`내 예측 <span class="tlv ${krHit?'ok':'no'}">${esc(p.krFirst)} ${krHit?'✅':'❌'}</span> · <span class="tlv ${opHit?'ok':'no'}">${esc(p.oppFirst)} ${opHit?'✅':'❌'}</span>`, ok:null, cls:(krHit&&opHit)?'ok':(!krHit&&!opHit)?'no':'mix'},
     {fact:`MVP: <b>${f.mvp?esc(f.mvp):'발표 전'}</b>`, mine:`내 예측 ${esc(p.mvp)}`, ok:f.mvp?mvpHit:null}
   ].map(t=>{const mk=t.ok===true?'✅ ':t.ok===false?'❌ ':'',cls=t.cls!==undefined?t.cls:(t.ok===true?'ok':t.ok===false?'no':'');
     return `<div class="tlrow"><div class="tlfact">${t.fact}</div><div class="tlmine ${cls}">${mk}${t.mine}</div></div>`;}).join('');
   const scorerWhy=(pick,actual,who)=>pick==='없음'
-    ? `${who} 무득점에 걸었지만 결국 골이 터졌고, 주인공은 <b>${esc(actual)}</b>였죠${actualNote(actual,O)}.`
+    ? `${who} 무득점에 걸었지만 결국 골이 터졌고, 주인공은 <b>${esc(actual)}</b>${ieot(actual)}죠${actualNote(actual,O)}.`
     : `<b>${esc(pick)}</b> 카드였지만, ${pickRisk(pick,O)}. 실제 ${who} 선제골은 <b>${esc(actual)}</b>${actualNote(actual,O)}.`;
   const why={
-    '경기 결과':`승부의 방향부터 어긋났어요. ${res(p.result)}이라 믿었지만 경기는 ${res(f.outcome)}. 여기서 60점이 통째로…`,
+    '경기 결과':`승부의 방향부터 어긋났어요. ${res(p.result)}${iRa(res(p.result))} 믿었지만 경기는 ${res(f.outcome)}. 여기서 60점이 통째로…`,
     '최종 스코어':`${p.kr}:${p.opp} vs 실제 <b>${f.kr}:${f.opp}</b>. 스코어는 디테일의 영역, 한 끗이 곧 점수죠.`,
     '🇰🇷 첫 득점자':scorerWhy(p.krFirst,f.krFirst,'한국'),
     '상대 첫 득점자':scorerWhy(p.oppFirst,f.oppFirst,O.name),
-    '첫 골 팀':`첫 골은 ${ftTeam(p.firstTeam)}이 넣을 줄 알았지만, <b>${ftTeam(f.firstTeam)}</b>이 먼저 골망을 흔들었죠.`,
-    '첫 골 시간대':`타이밍을 ${bandTxt(p.band)}로 봤는데 실제론 <b>${bandTxt(f.firstBand)}</b>. 시계가 살짝 빗나감.`,
+    '첫 골 팀':`첫 골은 ${ftTeam(p.firstTeam)}${iGa(ftTeam(p.firstTeam))} 넣을 줄 알았지만, <b>${ftTeam(f.firstTeam)}</b>${iGa(ftTeam(f.firstTeam))} 먼저 골망을 흔들었죠.`,
+    '첫 골 시간대':`타이밍을 ${bandTxt(p.band)}${euRo(bandTxt(p.band))} 봤는데 실제론 <b>${bandTxt(f.firstBand)}</b>. 시계가 살짝 빗나감.`,
     '전반전 결과':`전반을 ${res(p.half)}로 봤지만 실제 전반은 <b>${res(f.half)}</b>.`,
     '카드 수':`카드 ${cardLab(mid,p.cards)} 예상 → 실제 <b>${cardLab(mid,f.cards)}</b>.`,
     'MVP':`MVP로 <b>${esc(p.mvp)}</b>를 점찍었지만, 오늘 MVP의 영광은 <b>${esc(f.mvp)}</b>에게${actualNote(f.mvp,O)}.`
@@ -1140,7 +1177,7 @@ async function saveComment(mid){
   const el=$('#cmt_'+mid); const text=el?el.value.trim():'';
   data.comment=text;
   BUSY=true;
-  const {error}=await sb.from('predictions').upsert({match_id:mid,participant_id:USER,data});
+  const {error}=await sb.from('predictions').upsert({match_id:mid,participant_id:USER,data,updated_at:new Date().toISOString()},{onConflict:'match_id,participant_id'});
   BUSY=false;
   if(error){err('코멘트 저장 실패: '+error.message);return;}
   toast('💬 코멘트 변경!'); render();
@@ -1583,7 +1620,7 @@ syncThemeBtn();
     return;
   }
   if(SUPABASE_URL.includes('붙여넣기')){err('아직 설정 전입니다 — index.html 상단의 SUPABASE_URL과 SUPABASE_ANON_KEY를 입력하세요 (설치가이드 참고)');return;}
-  try{await fetchAll();S.tab=S.matches[HOME_TAB]?HOME_TAB:'m1';render();} // 기본 노출 경기(고정)
+  try{await fetchAll();S.tab=S.matches[HOME_TAB]?HOME_TAB:'m1';replayMissed(S.tab);render();} // 기본 노출 경기 + 그동안 바뀐 점수 토스트
   catch(e){console.error(e);}
 })();
 </script>
