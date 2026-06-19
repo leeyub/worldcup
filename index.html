@@ -1152,7 +1152,10 @@ function boardCard(mid,m,O,M){
   const groups={};
   pids.forEach(pid=>{const v=String(cur.get(M.preds[pid]));(groups[v]=groups[v]||[]).push(pid);});
   let deadAny=false;
-  const body=Object.entries(groups).sort((a,b)=>b[1].length-a[1].length).map(([v,ids])=>{
+  const body=Object.entries(groups).sort((a,b)=>{
+    if(known){const ha=a[0]===factStr,hb=b[0]===factStr;if(ha!==hb)return ha?-1:1;}  // 정답 그룹 최상단
+    return b[1].length-a[1].length;                                                   // 그다음 인원 많은 순
+  }).map(([v,ids])=>{
     const hit=known&&v===factStr;
     const dead=!known&&!!cur.dead&&cur.dead(M.preds[ids[0]]);   // 정답 미확정이지만 이미 불가능해진 픽
     if(dead)deadAny=true;
