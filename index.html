@@ -1118,36 +1118,44 @@ function rankNote(rows,ranks,i){
   const myTotal=r.total, myPend=r.pending, myMax=myTotal+myPend, rank=ranks[i];
   const last=rank===ranks[N-1]&&N>=3;
   const leaderTotal=rows[0].total;
+  const others=rows.filter((o,j)=>j!==i);
   // 사람마다 다른 변형을 고르되, 폴링 갱신에도 흔들리지 않게 pid 기반 고정 시드
   const seed=[...r.pid].reduce((s,c)=>s+c.charCodeAt(0),0);
   const pick=arr=>arr[seed%arr.length];
-  // 남은 항목 중 배점이 가장 큰 한 가지만 언급 → 긴 나열 대신 문장 간결화
-  const big=r.items.filter(it=>it.state==='pend').slice().sort((a,b)=>b.max-a.max)[0];
-  const bigStr=big?`${big.label} ${big.max}점`:'';
-  // 모든 항목 확정(경기 종료 등)
+  // 남은(미확정) 항목 — 배점 큰 순. 점수 격차 대신 "무엇을 맞히면 순위가 어떻게 변하나"로 표현
+  const pend=r.items.filter(it=>it.state==='pend').slice().sort((a,b)=>b.max-a.max);
+  const labs=pend.map(it=>it.label), big=pend[0];
+  const listSome=n=>labs.slice(0,n).join('·')+(labs.length>n?' 등':'');
+  // 다른 사람 점수를 현재값으로 고정했을 때, 내가 남은 걸 다 맞히면 오를 수 있는 최고 순위
+  const bestRank=1+others.filter(o=>o.total>myMax).length;
+  // A) 모든 항목 확정(경기 종료 등)
   if(myPend===0){
-    if(rank===1)return pick(['오늘의 예측왕 👑 당당히 1위로 마무리!','완벽했어요. 1위로 경기 끝!','끝까지 선두 수성, 멋진 1위예요.']);
-    if(last)return pick(['아쉬운 꼴찌… 다음 판 설욕전 가요!','이번엔 운이 없었네요. 다음 기회에!','반등은 다음 경기에서 노려봐요.']);
-    return pick([`최종 ${rank}위로 경기 끝, 수고했어요.`,`${rank}위로 마무리했어요. 잘했어요!`]);
+    if(rank===1)return pick(['오늘의 예측왕 👑 1위로 마무리!','완벽했어요, 당당히 1위!','끝까지 선두 수성 성공!']);
+    if(last)return pick(['아쉬운 꼴찌… 다음 판 설욕전 가요!','이번엔 운이 없었네요, 다음 기회에!','반등은 다음 경기에서 노려봐요!']);
+    return pick([`최종 ${rank}위로 경기 끝, 수고했어요!`,`${rank}위로 마무리했어요, 잘했어요!`]);
   }
-  // 아직 아무도 점수 없음
-  if(leaderTotal===0)return pick(['아직 0점, 지금부터가 진짜예요.','출발선은 모두 0점, 행운을 빌어요!','첫 점수의 주인공이 되어볼까요?']);
-  // 선두
+  // B) 아직 점수 전
+  if(leaderTotal===0)return pick(['지금부터가 진짜! 잘 맞혀서 치고 나가요.','출발선은 모두 0점, 다 맞히면 1위도 가능!','첫 점수의 주인공이 되어볼까요?']);
+  // C) 현재 1위
   if(rank===1){
-    if(rows.every((o,j)=>j===i||o.total+o.pending<=myTotal))
-      return pick(['이미 1위 확정! 느긋하게 즐기세요 👑','누구도 못 넘는 1위, 굳히기 완료!','승부 끝, 우승은 떼논 당상이에요.']);
-    return pick([`선두 질주 중! ${bigStr}만 지키면 우승 각이에요.`,'현재 톱이에요. 추격만 따돌리면 돼요.',`1위! 남은 ${myPend}점 잘 막아내요.`]);
+    if(others.every(o=>o.total+o.pending<=myTotal))
+      return pick(['이미 1위 확정! 남은 결과 상관없이 우승 🏆','승부 끝, 우승은 떼논 당상이에요!','누구도 못 넘는 선두예요 👑']);
+    return pick([`현재 1위! 남은 ${listSome(2)}만 지키면 우승이에요.`,'선두 질주 중, 남은 항목만 잘 지키면 우승 🏆','1위 수성 중! 방심은 금물이에요.']);
   }
-  // 추격권
-  const gap=leaderTotal-myTotal;
-  if(myMax>=leaderTotal){
-    if(gap<=30)return pick([`선두까지 단 ${gap}점! ${bigStr} 하나면 뒤집어요.`,`코앞이에요, ${gap}점 차. 역전 가시권!`,`${gap}점만 따라잡으면 1위, 충분해요!`]);
-    return pick([`${gap}점 뒤지지만 ${bigStr} 노리면 역전 가능!`,`아직 ${gap}점 차, 남은 ${myPend}점이 기회예요.`,`역전의 키는 ${bigStr}, 포기는 일러요!`]);
-  }
-  if(rows.some((o,j)=>o.total>myTotal&&myMax>o.total))
-    return pick([`1위는 멀어도 ${bigStr}로 순위는 올려요.`,`상위권 추격! 남은 ${myPend}점 알차게 챙겨요.`,`${bigStr} 맞히면 한 계단 더 오를지도?`]);
-  if(last)return pick([`뒤집긴 어렵지만 ${bigStr}라도 챙겨봐요.`,'이번 판은 마음 비우고… 다음을 노려요.','반등은 쉽지 않아도 끝까지 응원해요!']);
-  return pick([`큰 변동은 어려워도 ${bigStr}는 노려볼 만해요.`,`남은 ${myPend}점이라도 알차게 챙겨봐요.`,'작은 반등의 여지는 아직 남았어요.']);
+  // D) 단 한 항목만 맞혀도 1위로 올라설 수 있음 (가장 재밌는 케이스)
+  if(big&&myTotal+big.max>=leaderTotal)
+    return pick([`남은 ${big.label} 하나만 맞혀도 1위 등극! 🔥`,`${big.label} 적중하면 단숨에 1위예요!`,`${big.label} 하나면 역전 1위, 노려봐요!`]);
+  // E) 남은 걸 다 맞히면 1위 가능
+  if(myMax>=leaderTotal)
+    return pick([`남은 ${listSome(2)} 다 맞히면 1위까지 가능! 🔥`,'남은 거 잘 맞히면 1위도 노려볼 만해요!','전부 적중하면 정상도 가시권이에요!']);
+  // F) 1위는 무리지만 순위 상승 여지
+  if(bestRank<rank)
+    return pick([`1위는 무리지만 남은 거 맞히면 ${bestRank}위까지!`,`남은 ${listSome(2)} 적중하면 최고 ${bestRank}위!`,`${bestRank}위까지는 충분히 노려볼 만해요!`]);
+  // G) 다 맞혀도 꼴등
+  if(last)
+    return pick(['안타깝지만 다 맞혀도 꼴등이에요 😭','전부 적중해도 최하위… 마음을 비워봐요.','이번 판은 아쉽지만 끝까지 함께 봐요!']);
+  // H) 순위 변동 없음
+  return pick([`다 맞혀도 ${rank}위 그대로… 점수라도 챙겨요!`,'순위는 굳었지만 남은 점수는 챙겨봐요.','큰 변동은 없겠지만 끝까지 응원해요!']);
 }
 // 등번호 카드 — 현재 경기 두 팀(한국+상대). 중계 화면 번호↔선수 매핑용
 function squadCard(m,O){
