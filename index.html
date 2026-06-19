@@ -65,7 +65,7 @@ header .sub{color:var(--sub);font-size:12px;margin-top:4px}
 .tab .d{display:block;font-size:10px;font-weight:500;margin-top:2px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:var(--sp-5);margin-bottom:var(--sp-4)}
 .card h3{font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:12px}
-.pt{margin-left:auto;font-size:11px;font-weight:800;color:var(--gold);background:var(--pill);padding:3px 8px;border-radius:8px}
+.pt{margin-left:auto;font-size:11px;font-weight:800;color:var(--sub);background:var(--pill);padding:3px 8px;border-radius:8px}
 .hint{font-size:12px;color:var(--sub);margin:-8px 0 12px;line-height:1.5}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{display:inline-flex;align-items:center;gap:6px;background:var(--pill);border:1px solid var(--line);border-radius:10px;padding:var(--sp-2) var(--sp-4);font-size:13px;font-weight:600}
@@ -952,7 +952,8 @@ function betCard(mid){
       <div class="bstep"><span class="bn">①</span><span class="bc">점심값 <b>${won(lunch)}원</b>을 <b>${N}명이 1/n</b><span class="bdr">→ 기본 <b>${won(even)}원</b>씩</span></span></div>
       <div class="bstep"><span class="bn">②</span><span class="bc">거기서 <b>순위 내기로 가감</b><span class="bds bsub">(1인 ${won(stake)}원 판돈을 등수대로 상금 분배)</span><span class="bdr">→ 1등 <b>${won(topCut)}원 덜 냄</b> … 꼴등 <b>${won(botAdd)}원 더 냄</b></span></span></div>
       <div class="bstep"><span class="bn">③</span><span class="bc">그래서 <b>각자 정산액</b><span class="bdr">→ 1등 <b>${won(amt[0])}원</b> … 꼴등 <b>${won(amt[N-1])}원</b></span></span></div>
-      <div class="bdl bds">※ 다 더하면 ${won(lunch)}원(= 결제한 점심값 그대로) · 동점은 같은 금액 · 10원 단위 · 현재 순위 기준</div>
+      <div class="bdl bds">※ 다 더하면 ${won(lunch)}원(= 결제한 점심값 그대로)</div>
+      <div class="bdl bds">※ 동점은 같은 금액 · 10원 단위 · 현재 순위 기준</div>
       ${exNote}
     </div>
     ${li}</div>`;
