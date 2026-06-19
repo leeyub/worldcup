@@ -215,10 +215,10 @@ select.sel{min-height:54px;padding:15px 12px;font-weight:600}
 .repp b{font-weight:800}
 .rephit{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.22);border-radius:9px;padding:10px 12px;margin-bottom:6px}
 .rephit .rhmain{min-width:0}
-.rephit .rhlbl{font-size:13px;font-weight:800;color:var(--green)}
-.rephit .rhtag{font-size:10px;font-weight:800;padding:1px 7px;border-radius:6px;margin-left:6px;white-space:nowrap}
+.rephit .rhlbl{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:13px;font-weight:800;color:var(--green)}  /* 배지를 타이틀과 세로 중앙정렬 */
+.rephit .rhtag{font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;white-space:nowrap;line-height:1.3}
 .rephit .rhtag.full{color:var(--green);background:rgba(52,211,153,.18)}
-.rephit .rhtag.part{color:var(--gold);background:var(--sel)}
+.rephit .rhtag.part{color:var(--sub);background:rgba(130,130,130,.18)}  /* 부분점수 = 그레이스케일 반투명(초록과 색충돌 회피) */
 .rephit .rhmine{font-size:12px;font-weight:600;color:var(--sub);margin-top:3px;word-break:keep-all}
 .rephit .hp .hpmax{font-size:11px;font-weight:700;color:var(--sub)}
 .rules{display:flex;flex-direction:column}
