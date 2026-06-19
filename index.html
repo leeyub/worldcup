@@ -1025,13 +1025,13 @@ const ANECDOTES_M1={
 };
 // 2차전(멕시코전) 장외 스토리 — gname 기준. {cl}=클러스터(베팅 성향), {rk}=이 경기 등수로 치환되어 리포트와 연결됨
 const ANECDOTES_M2={
-  '승현':`청계천 휴에선 김치전·두부김치 같이 먹어줄 사람을 애타게 찾던 승현님 🍲. 그 왕성한 식탐만큼 예측도 욕심껏 그러모아, 식사도 점수도 푸짐하게 챙긴 {rk}의 ‘{cl}’.`,
-  '진우':`‘야르한 아침’ 알람까지 맞춰뒀다지만 끝내 경기장엔 코빼기도 안 비친 진우님 🛌. 몸은 노쇼였어도 예측만 덩그러니 남겨둬, 자리를 비운 채 {rk}에 이름만 올린 ‘{cl}’.`,
+  '승현':`청계천 휴에선 김치전·두부김치 같이 먹어줄 사람을 애타게 찾던 승현님 🍲. 그 왕성한 식탐만큼 예측도 욕심껏 끌어모아, 식사도 점수도 푸짐하게 챙긴 {rk}의 ‘{cl}’.`,
+  '진우':`‘야르한 아침’ 알람까지 맞춰뒀다지만 끝내 경기장엔 코빼기도 안 비친 진우님 🛌. 출석은 노쇼, 예측은 GPT한테 대신 물어 남겨둔 채 {rk}에 이름만 올린 ‘{cl}’.`,
   '석민':`출근하는 날도 아닌데 제일 먼저 나와 모두의 자리를 맡아둔 석민님 🪑. 그 따뜻한 감성처럼 예측도 마음 가는 대로 찍어, 한발 앞서 자리를 선점하듯 {rk}에 안착한 ‘{cl}’.`,
   '도현':`바쁜 와중에도 다 같이 볼 자리를 예약해준 도현님 📞. 정작 본인은 전화받느라 경기를 띄엄띄엄 봤는데, 예측도 딱 그만큼 집중이 흐트러져 {rk}에 머문 ‘{cl}’.`,
   '수미':`전반이 다 끝나고서야 등장한 수미님 🩰. 발레리나답게 그랑 제떼로 점프해 왔으면 딱 제때였을 텐데, 타이밍이 아쉬운 건 예측도 마찬가지라 {rk}을 기록한 ‘{cl}’.`,
   '동엽':`경기날마다 7시 출근을 호언장담하지만 늘 늦잠인 동엽님 ⏰. 출근 내기에 져 승현님께 주식 1주를 헌납한 날, 예측 승부까지 {rk}이라 베팅 운이 영 안 따라준 ‘{cl}’.`,
-  '호민':`늦게 도착했더니 감자튀김이 반의반도 안 남아 있던 호민님 🍟. 한 입이라도 더 노리는 그 욕심은 예측에서도 똑같아서, 큼직하게 질렀다가 {rk}에 자리한 ‘{cl}’.`,
+  '호민':`남들 늦는 사이 제때 도착해 감자튀김을 야무지게 쓸어 담은 호민님 🍟. 한 입이라도 더 챙기는 그 욕심은 예측에서도 똑같아, 큼직하게 질렀다가 {rk}에 자리한 ‘{cl}’.`,
   '승표':`청계천 휴엔 코빼기도 안 비쳤으면서 예측만큼은 칼같이 제출한 승표님 🎯. 함께 밥을 안 먹어 정산에선 쏙 빠졌는데, 적중률은 또 야무져 {rk}에 오른 얄미운 ‘{cl}’.`,
   '민우':`본 게임도 모자라 찐토토까지 병행한 진성 베터 민우님 🎰. 한국 승·무에 3만원씩 걸었다 멕시코한테 뒤통수 맞은 날, 이 판 예측도 {rk}에 그쳐 두 배로 쓰라린 ‘{cl}’.`
 };
@@ -1099,9 +1099,21 @@ function showReport(mid,pid){
   const euRo=w=>{const s=String(w).replace(/[^가-힣]/g,'');if(!s)return'로';const j=(s.charCodeAt(s.length-1)-0xAC00)%28;return(j===0||j===8)?'로':'으로';};
   const hits=d.items.filter(it=>it.state==='hit').sort((a,b)=>b.pts-a.pts);
   const misses=d.items.filter(it=>it.state==='miss').sort((a,b)=>b.max-a.max);
+  const pg=p.kr+p.opp, rg=f.kr+f.opp;
   const lean=p.result===1?'한국 승리를 믿은 낙관파':p.result===-1?O.name+' 우세를 점친 역배파':'무승부를 노린 중립파';
-  const aggr=p.kr>=3?'한국 다득점을 노린 공격형':(p.kr+p.opp)<=1?'짠물 승부를 그린 수비형':'적당한 스코어를 그린 균형형';
-  const style=`${esc(name)}님은 <b>${lean}</b>이자 <b>${aggr}</b> 베터예요. 한국 ${p.kr}:${p.opp}에 첫 골은 ${ftTeam(p.firstTeam)}, 첫 득점자 ${esc(p.krFirst)}, MVP ${esc(p.mvp)}${euRo(p.mvp)} 그림을 그렸죠.`;
+  const aggr=pg>=4?'골 잔치를 기대한 공격형':pg<=1?'짠물 승부를 그린 수비형':'적당한 스코어를 노린 균형형';
+  const drew=`한국 <b>${p.kr}:${p.opp}</b>(총 ${pg}골)에 카드 <b>${cardLab(mid,p.cards)}</b>, 첫 득점자 <b>${esc(p.krFirst)}</b>, MVP <b>${esc(p.mvp)}</b> 그림을 그렸죠.`;
+  // 예측 vs 실제 간극을 자동 탐지 → 차이가 큰 항목을 콕 집어 캐릭터를 살림(구조: 항목 추가만 하면 자동 반영)
+  const gaps=[];
+  if(pg!==rg)gaps.push({sev:Math.abs(pg-rg),txt:`골 ${pg}골(${p.kr}:${p.opp})→실제 ${rg}골(${f.kr}:${f.opp})`});
+  if(cardEx(mid)&&('cards'in f)&&p.cards!==f.cards)gaps.push({sev:Math.abs(p.cards-f.cards),txt:`카드 ${cardLab(mid,p.cards)}→실제 ${cardLab(mid,f.cards)}`});
+  if(p.result!==f.outcome)gaps.push({sev:2,txt:`승부 ${res(p.result)}→실제 ${res(f.outcome)}`});
+  if('firstBand'in f&&p.band!==f.firstBand)gaps.push({sev:1,txt:`첫 골 ${bandTxt(p.band)}→실제 ${bandTxt(f.firstBand)}`});
+  const notable=gaps.filter(g=>g.sev>=2).sort((a,b)=>b.sev-a.sev).slice(0,2).map(g=>g.txt);
+  const contrast=notable.length
+    ? `그런데 막상 뚜껑을 열어보니 ${notable.join(', ')} — 예측과 실제의 간극이 딱 ‘${cl.n}’답네요.`
+    : `예측이 실제 흐름과 제법 맞아떨어진 차분한 한 판이었어요.`;
+  const style=`${esc(name)}님은 <b>${lean}</b>이자 <b>${aggr}</b> 베터예요. ${drew} ${contrast}`;
   const tl=[
     {fact:`경기는 <b>${f.kr}:${f.opp}</b>, ${f.outcome===1?'🇰🇷 한국 승리':f.outcome===-1?O.flag+' '+O.name+' 승':'무승부'}`, mine:`내 예측 ${res(p.result)}`, ok:resHit},
     {fact:`첫 골: <b>${ftTeam(f.firstTeam)}</b>${iGa(ftTeam(f.firstTeam))} <b>${bandTxt(f.firstBand)}</b>에 선제`, mine:`내 예측 ${bandTxt(p.band)}`, ok:p.band===f.firstBand},
